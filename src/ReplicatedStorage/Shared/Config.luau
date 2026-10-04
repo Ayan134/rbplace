@@ -56,7 +56,8 @@ local Config = {
 		Spacing = 1000,
 		Columns = 8,
 		MaxSlots = 48,
-		GroundSize = 520,
+		GroundSize = 700, -- grass terrain (backdrop hills sit past the playable edge)
+		PlayableSize = 520, -- invisible boundary walls
 	},
 
 	Match = {

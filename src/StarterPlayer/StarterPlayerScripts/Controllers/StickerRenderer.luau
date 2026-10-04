@@ -127,6 +127,44 @@ local function acquireArt(): SurfaceGui
 	image.ScaleType = Enum.ScaleType.Fit
 	image.Visible = false
 	image.Parent = gui
+	-- White die-cut edge, like a real vinyl sticker
+	local border = Instance.new("Frame")
+	border.Name = "Border"
+	border.Size = UDim2.fromScale(1, 1)
+	border.BackgroundTransparency = 1
+	border.ZIndex = 2
+	border.Parent = gui
+	local borderCorner = Instance.new("UICorner")
+	borderCorner.Name = "Corner"
+	borderCorner.Parent = border
+	local stroke = Instance.new("UIStroke")
+	stroke.Name = "Stroke"
+	stroke.Color = Color3.new(1, 1, 1)
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = border
+	-- Soft diagonal gloss
+	local gloss = Instance.new("Frame")
+	gloss.Name = "Gloss"
+	gloss.Size = UDim2.fromScale(1, 1)
+	gloss.BackgroundColor3 = Color3.new(1, 1, 1)
+	gloss.BorderSizePixel = 0
+	gloss.ZIndex = 3
+	gloss.Parent = gui
+	local glossCorner = Instance.new("UICorner")
+	glossCorner.Name = "Corner"
+	glossCorner.Parent = gloss
+	local gradient = Instance.new("UIGradient")
+	gradient.Rotation = 55
+	gradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(0.3, 0.78),
+		NumberSequenceKeypoint.new(0.36, 1),
+		NumberSequenceKeypoint.new(0.62, 1),
+		NumberSequenceKeypoint.new(0.68, 0.88),
+		NumberSequenceKeypoint.new(0.74, 1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	gradient.Parent = gloss
 	return gui
 end
 
@@ -161,6 +199,17 @@ local function attachArt(record)
 	else
 		image.Image = content
 	end
+	-- Border width scales with the sticker so small and huge stickers look alike
+	local radius = if record.Circle then UDim.new(0.5, 0) else UDim.new(0.1, 0)
+	local border = gui:FindFirstChild("Border") :: Frame
+	local gloss = gui:FindFirstChild("Gloss") :: Frame
+	local borderCorner = border:FindFirstChild("Corner") :: UICorner
+	local glossCorner = gloss:FindFirstChild("Corner") :: UICorner
+	local stroke = border:FindFirstChild("Stroke") :: UIStroke
+	local shortSide = math.min(record.SizeX or 1, record.SizeZ or 1)
+	borderCorner.CornerRadius = radius
+	glossCorner.CornerRadius = radius
+	stroke.Thickness = math.clamp(shortSide * gui.PixelsPerStud * 0.06, 1.5, 9)
 	-- Circle stickers are cylinders whose +X axis is the surface normal
 	gui.Face = if record.Circle then Enum.NormalId.Right else Enum.NormalId.Top
 	gui.Adornee = record.Part

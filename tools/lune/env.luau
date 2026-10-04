@@ -38,9 +38,14 @@ local function implementEverywhere(methodName: string, callback)
 	end
 end
 
-implementEverywhere("WaitForChild", function(self, name: string)
+implementEverywhere("WaitForChild", function(self, name: string, timeout: number?)
+	local deadline = os.clock() + (timeout or 5)
 	local child = self:FindFirstChild(name)
-	if not child then
+	while not child and os.clock() < deadline do
+		task.wait(0.05)
+		child = self:FindFirstChild(name)
+	end
+	if not child and not timeout then
 		error("WaitForChild: " .. self:GetFullName() .. " has no child " .. name)
 	end
 	return child
@@ -211,7 +216,9 @@ local function raycast(_workspace, origin, direction, params)
 	if not params then
 		return nil
 	end
-	if not params._cache then
+	-- Refresh periodically: client folders gain parts over time
+	if not params._cache or os.clock() - (params._cacheTime or 0) > 1 then
+		params._cacheTime = os.clock()
 		local parts = {}
 		for _, root in ipairs(params.FilterDescendantsInstances) do
 			if isPart(root) then
@@ -271,13 +278,9 @@ end
 -- Module loader
 ------------------------------------------------------------------------
 
-function Env.load(placePath: string)
-	local game = roblox.deserializePlace(fs.readFile(placePath))
-	local cache = {}
-
-	local baseEnv = {
-		game = game,
-		workspace = game:GetService("Workspace"),
+-- Globals the game's scripts expect, minus game/workspace/script/require.
+function Env.BaseEnv()
+	return {
 		Instance = Instance,
 		Vector3 = Vector3,
 		Vector2 = roblox.Vector2,
@@ -298,6 +301,15 @@ function Env.load(placePath: string)
 			print("[warn]", ...)
 		end,
 	}
+end
+
+function Env.load(placePath: string)
+	local game = roblox.deserializePlace(fs.readFile(placePath))
+	local cache = {}
+
+	local baseEnv = Env.BaseEnv()
+	baseEnv.game = game
+	baseEnv.workspace = game:GetService("Workspace")
 
 	local function requireModule(module)
 		if cache[module] ~= nil then

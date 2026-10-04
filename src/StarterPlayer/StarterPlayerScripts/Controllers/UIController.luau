@@ -179,9 +179,10 @@ local function setMode(mode: string)
 		screens.Gameplay:Hide()
 		screens.Results:Hide()
 		screens.Party:Update()
-		Controllers.SoundManager.PlayAmbience("LobbyAmbience")
+		Controllers.SoundManager.PlayTheme("Lobby")
 	elseif mode == "Game" then
-		Controllers.SoundManager.PlayAmbience("LevelAmbience")
+		local match = Controllers.DataController.Match
+		Controllers.SoundManager.PlayTheme(match and match.LevelId)
 	end
 end
 
@@ -215,10 +216,12 @@ local function onMatchEvent(eventName: string, payload)
 		screens.Gameplay:UpdateTeam(payload.Team)
 	elseif eventName == "Complete" then
 		setMode("Results")
-		Controllers.SoundManager.PlayAmbience("ResultsMusic")
+		Controllers.SoundManager.PlayMusic("ResultsMusic")
+		Controllers.SoundManager.Duck(4, 0.15)
 		screens.Gameplay:StopTimer()
 		Controllers.SoundManager.Play("LevelComplete")
 		Controllers.EffectsController.Confetti(90)
+		Controllers.EffectsController.Fireworks(Controllers.DataController.Match and Controllers.DataController.Match.Focus)
 		Controllers.AnimationController.Celebrate()
 		UIController.Announce("Object cleaned", payload.LevelName, Theme.Colors.Yellow, 2.4)
 		task.delay(2.6, function()
@@ -236,6 +239,7 @@ end
 local function onEffect(effectName: string, payload)
 	if effectName == "LevelUp" then
 		Controllers.SoundManager.Play("LevelUp")
+		Controllers.SoundManager.Duck(2.5)
 		Controllers.EffectsController.Confetti(60)
 		UIController.Announce("Level up", string.format("Level %d  ·  +%d gems", payload.Level, payload.Gems), Theme.Colors.XP, 2.6)
 		for _, unlock in ipairs(payload.Unlocks or {}) do
@@ -266,6 +270,9 @@ function UIController.Start()
 		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	end)
 	Components.SetSoundManager(Controllers.SoundManager)
+	Components.WindowsChanged = function(count: number)
+		Controllers.LightingController.SetBlur(count > 0)
+	end
 
 	local ctx = { Controllers = Controllers, UI = UIController }
 	local function load(name: string)
@@ -284,6 +291,8 @@ function UIController.Start()
 	screens.Gameplay = load("GameplayScreen").new(getGui("GameplayUI"), ctx)
 	screens.Loading = load("LoadingScreen").new(getGui("LoadingUI"), ctx)
 	screens.Results = load("ResultsScreen").new(getGui("ResultsUI"), ctx)
+
+	UIController.Screens = screens -- exposed for debugging and automated tests
 
 	windows = {
 		Levels = screens.Levels,

@@ -156,6 +156,101 @@ function EffectsController.Confetti(amount: number?)
 	end
 end
 
+-- Fireworks bursting above the cleaned object
+local FIREWORK_COLORS = {
+	Color3.fromRGB(255, 96, 150),
+	Color3.fromRGB(255, 214, 80),
+	Color3.fromRGB(110, 222, 164),
+	Color3.fromRGB(110, 190, 255),
+	Color3.fromRGB(200, 140, 255),
+	Color3.fromRGB(255, 150, 80),
+}
+
+local function launchFirework(from: Vector3, to: Vector3, color: Color3)
+	local rocket = Instance.new("Part")
+	rocket.Name = "Firework"
+	rocket.Size = Vector3.new(0.5, 0.5, 0.5)
+	rocket.Shape = Enum.PartType.Ball
+	rocket.Material = Enum.Material.Neon
+	rocket.Color = color
+	rocket.Anchored = true
+	rocket.CanCollide = false
+	rocket.CanQuery = false
+	rocket.CanTouch = false
+	rocket.CastShadow = false
+	rocket.CFrame = CFrame.new(from)
+	rocket.Parent = Workspace
+
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = rocket
+	local trail = Instance.new("ParticleEmitter")
+	trail.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	trail.Color = ColorSequence.new(Color3.fromRGB(255, 230, 180))
+	trail.LightEmission = 1
+	trail.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
+	trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	trail.Lifetime = NumberRange.new(0.3, 0.5)
+	trail.Speed = NumberRange.new(0.5, 2)
+	trail.SpreadAngle = Vector2.new(20, 20)
+	trail.Rate = 60
+	trail.Parent = attachment
+
+	local rise = rng:NextNumber(0.9, 1.3)
+	local flight = TweenService:Create(rocket, TweenInfo.new(rise, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = CFrame.new(to) })
+	flight:Play()
+	flight.Completed:Once(function()
+		trail.Enabled = false
+		rocket.Transparency = 1
+		local burst = Instance.new("ParticleEmitter")
+		burst.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		burst.Color = ColorSequence.new(color, color:Lerp(Color3.new(1, 1, 1), 0.5))
+		burst.LightEmission = 1
+		burst.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.1), NumberSequenceKeypoint.new(0.7, 0.6), NumberSequenceKeypoint.new(1, 0) })
+		burst.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.75, 0.2), NumberSequenceKeypoint.new(1, 1) })
+		burst.Lifetime = NumberRange.new(1.2, 1.8)
+		burst.Speed = NumberRange.new(22, 30)
+		burst.SpreadAngle = Vector2.new(180, 180)
+		burst.Drag = 2.4
+		burst.Acceleration = Vector3.new(0, -7, 0)
+		burst.Rate = 0
+		burst.Parent = attachment
+		burst:Emit(if lowVFX then 40 else 110)
+		local glow = Instance.new("PointLight")
+		glow.Color = color
+		glow.Range = 40
+		glow.Brightness = 4
+		glow.Parent = rocket
+		TweenService:Create(glow, TweenInfo.new(1.2), { Brightness = 0 }):Play()
+		Controllers.SoundManager.Play("Fireworks", { Position = to })
+		task.delay(2.2, function()
+			rocket:Destroy()
+		end)
+	end)
+end
+
+function EffectsController.Fireworks(focus: Vector3?, count: number?)
+	local center = focus
+	if not center then
+		local camera = Workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		center = camera.CFrame.Position + camera.CFrame.LookVector * 60
+	end
+	local base = center :: Vector3
+	local total = if lowVFX then 4 else (count or 10)
+	task.spawn(function()
+		for i = 1, total do
+			local angle = rng:NextNumber(0, math.pi * 2)
+			local radius = rng:NextNumber(18, 40)
+			local from = base + Vector3.new(math.cos(angle) * radius, -8, math.sin(angle) * radius)
+			local to = base + Vector3.new(math.cos(angle) * radius * 0.6, rng:NextNumber(32, 54), math.sin(angle) * radius * 0.6)
+			launchFirework(from, to, FIREWORK_COLORS[(i % #FIREWORK_COLORS) + 1])
+			task.wait(rng:NextNumber(0.25, 0.55))
+		end
+	end)
+end
+
 function EffectsController.Flash(color: Color3, intensity: number?)
 	local flash = Instance.new("Frame")
 	flash.Size = UDim2.fromScale(1, 1)

@@ -122,6 +122,12 @@
         "$className": "SoundGroup",
         "$properties": {
           "Volume": 0.8
+        },
+        "Ambience": {
+          "$className": "SoundGroup",
+          "$properties": {
+            "Volume": 0.7
+          }
         }
       },
       "Music": {

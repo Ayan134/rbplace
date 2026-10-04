@@ -29,6 +29,7 @@ local Utility = require(Shared.Utility)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local Systems = script.Parent.Parent.Systems
+local Decor = require(Systems.Decor)
 local LobbyBuilder = require(Systems.LobbyBuilder)
 local Notifier = require(Systems.Notifier)
 local RateLimiter = require(Systems.RateLimiter)
@@ -90,6 +91,11 @@ local function publishPreviews()
 		if source and not previewsFolder:FindFirstChild(level.LevelId) then
 			local preview = source:Clone()
 			preview.Name = level.LevelId
+			-- Previews show the object only; the scenery around it is far too big for a viewport
+			local environment = preview:FindFirstChild("Environment")
+			if environment then
+				environment:Destroy()
+			end
 			for _, descendant in ipairs(preview:GetDescendants()) do
 				if descendant:IsA("BasePart") then
 					descendant.Anchored = true
@@ -209,9 +215,10 @@ local function buildArena(match): (Model, BasePart)
 	ground.TopSurface = Enum.SurfaceType.Smooth
 	ground.Parent = arena
 
-	-- Real grass terrain under the arena; the part stays only for sticker occlusion tests
+	-- Real grass terrain under the arena (deep enough for ponds and moats);
+	-- the part stays only for sticker occlusion tests
 	local filled = pcall(function()
-		Workspace.Terrain:FillBlock(CFrame.new(origin - Vector3.new(0, 2, 0)), Vector3.new(groundSize, 4, groundSize), Enum.Material.Grass)
+		Workspace.Terrain:FillBlock(CFrame.new(origin - Vector3.new(0, 5, 0)), Vector3.new(groundSize, 10, groundSize), Enum.Material.Grass)
 	end)
 	if filled then
 		ground.Transparency = 1
@@ -219,39 +226,16 @@ local function buildArena(match): (Model, BasePart)
 		match.TerrainFilled = true
 	end
 
+	local playable = Config.Arena.PlayableSize
 	for _, def in ipairs({ { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } }) do
 		local wall = Instance.new("Part")
 		wall.Name = "Boundary"
-		wall.Size = if def[1] == 0 then Vector3.new(groundSize, 300, 4) else Vector3.new(4, 300, groundSize)
-		wall.CFrame = CFrame.new(origin + Vector3.new(def[1] * groundSize / 2, 150, def[2] * groundSize / 2))
+		wall.Size = if def[1] == 0 then Vector3.new(playable, 300, 4) else Vector3.new(4, 300, playable)
+		wall.CFrame = CFrame.new(origin + Vector3.new(def[1] * playable / 2, 150, def[2] * playable / 2))
 		wall.Anchored = true
 		wall.Transparency = 1
 		wall.CanQuery = false
 		wall.Parent = arena
-	end
-
-	-- A ring of trees so the arena doesn't feel empty
-	for i = 0, 15 do
-		local angle = (i / 16) * math.pi * 2
-		local position = origin + Vector3.new(math.sin(angle), 0, math.cos(angle)) * (groundSize / 2 - 30)
-		local trunk = Instance.new("Part")
-		trunk.Name = "Trunk"
-		trunk.Size = Vector3.new(12, 2, 2)
-		trunk.CFrame = CFrame.new(position + Vector3.new(0, 6, 0)) * CFrame.Angles(0, 0, math.rad(90))
-		trunk.Shape = Enum.PartType.Cylinder
-		trunk.Anchored = true
-		trunk.Color = Color3.fromRGB(120, 82, 52)
-		trunk.Material = Enum.Material.Wood
-		trunk.Parent = arena
-		local leaves = Instance.new("Part")
-		leaves.Name = "Leaves"
-		leaves.Size = Vector3.new(14, 12, 14)
-		leaves.CFrame = CFrame.new(position + Vector3.new(0, 15, 0))
-		leaves.Shape = Enum.PartType.Ball
-		leaves.Anchored = true
-		leaves.Color = Color3.fromRGB(80, 170, 70)
-		leaves.Material = Enum.Material.Grass
-		leaves.Parent = arena
 	end
 
 	local source = levelsFolder:FindFirstChild(match.LevelInfo.ObjectModel)
@@ -265,6 +249,18 @@ local function buildArena(match): (Model, BasePart)
 	level.Name = match.LevelInfo.LevelId
 	level:PivotTo(CFrame.new(origin))
 	level.Parent = arena
+	if filled then
+		-- Ponds, moats and fountains become real terrain water
+		Decor.ApplyTerrain(level)
+	end
+	if not level:FindFirstChild("Environment") then
+		-- Hand-made models without scenery still get a tree ring
+		local rng = Random.new(match.Slot)
+		local folder = Instance.new("Folder")
+		folder.Name = "Environment"
+		folder.Parent = level
+		Decor.Backdrop(folder, origin, playable / 2 - 20, rng)
+	end
 	arena.Parent = arenasFolder
 	return level, ground
 end
@@ -469,7 +465,7 @@ function endMatch(match)
 	if match.TerrainFilled then
 		local groundSize = Config.Arena.GroundSize
 		pcall(function()
-			Workspace.Terrain:FillBlock(CFrame.new(match.Origin - Vector3.new(0, 2, 0)), Vector3.new(groundSize + 8, 4, groundSize + 8), Enum.Material.Air)
+			Workspace.Terrain:FillBlock(CFrame.new(match.Origin - Vector3.new(0, 4, 0)), Vector3.new(groundSize + 8, 16, groundSize + 8), Enum.Material.Air)
 		end)
 	end
 	slots[match.Slot] = nil
@@ -700,10 +696,12 @@ local function setupShowcase()
 	end
 	local model = source:Clone()
 	model.Name = "Showcase"
-	-- The lobby has its own plaza; drop level ground decorations
-	local plaza = model:FindFirstChild("Plaza", true)
-	if plaza then
-		plaza:Destroy()
+	-- The lobby has its own plaza and scenery; keep only the object itself
+	for _, name in ipairs({ "Plaza", "Environment" }) do
+		local child = model:FindFirstChild(name, true)
+		if child then
+			child:Destroy()
+		end
 	end
 	local position = if anchor and anchor:IsA("BasePart") then anchor.Position else Vector3.new(0, 0.35, 0)
 	model:PivotTo(CFrame.new(position))

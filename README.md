@@ -44,7 +44,8 @@ ReplicatedStorage
 │   ├── ToolConfig           инструменты
 │   ├── UpgradeConfig        улучшения
 │   ├── QuestConfig          ежедневные задания
-│   ├── SoundConfig          ВСЕ SoundId (единственное место)
+│   ├── SoundConfig          ВСЕ SoundId (единственное место) + музыка/фон для каждого уровня
+│   ├── LightingConfig       свет и пост-эффекты для лобби и каждого уровня
 │   ├── Rarity, Progression, PlayerStats, StickerCodec, ToolModels, Signal, Utility
 └── Assets/LevelPreviews     превью уровней для UI (заполняется сервером)
 
@@ -57,17 +58,17 @@ ServerScriptService
 │   ├── StickerService       ЕДИНСТВЕННЫЙ владелец состояния всех наклеек
 │   ├── EconomyService       Coins / Gems / XP / комбо / награды
 │   ├── UpgradeService, ToolService, QuestService
-├── Systems                  StickerGenerator, LobbyBuilder, RateLimiter, Notifier
+├── Systems                  StickerGenerator, LobbyBuilder, Decor (библиотека декора), RateLimiter, Notifier
 └── LevelBuilders            BuildKit + Fountain, Car, Statue, House, Mansion, Airplane, Palace
 
-ServerStorage/Levels         модели уровней (Geometry, StickerSurfaces, Climb, SpawnPoint,
-                             FinishArea, Configuration)
+ServerStorage/Levels         модели уровней (Geometry, StickerSurfaces, Climb, Environment,
+                             SpawnPoint, FinishArea, Configuration)
 
 StarterPlayer/StarterPlayerScripts
 ├── ClientMain
-├── Controllers              DataController, SoundManager, StickerRenderer, InteractionController,
-│                            PeelController, EffectsController, AnimationController,
-│                            CameraController, UIController
+├── Controllers              DataController, SoundManager, LightingController, StickerRenderer,
+│                            InteractionController, PeelController, EffectsController,
+│                            AnimationController, CameraController, UIController
 └── UI                       Theme, Components, ToolCard, Screens/*
 
 StarterGui                   LobbyUI, PartyUI, LevelSelectUI, GameplayUI, InventoryUI, UpgradeUI,
@@ -191,9 +192,35 @@ Peel Power, Peel Speed, Sticker Capacity, Luck, Reward Multiplier — цена �
 
 Всё остальное (выбор уровня, превью, комнаты, награды, рекорды) подхватится автоматически.
 
+## Оформление уровней
+
+Каждый объект стоит в своей локации. Декор лежит в папке `Environment` модели уровня: он не масштабируется вместе с объектом, на нём нет наклеек, и он не мешает генератору. Все детали берутся из `Systems/Decor` (деревья 5 видов, фонари, гирлянды, флажки, лавки, клумбы, здания, дороги, машины, фудтрак, беседка, теннисный корт, воздушные шары, вода и т.д.).
+
+| Уровень | Локация | Свет |
+|---|---|---|
+| Fountain | городская площадь: брусчатка, кольцевая дорога с переходами, 12 пастельных домиков с маркизами, кафе, гирлянды | золотой час |
+| Car | вечернее автошоу: неоновая сцена, прожекторы, бархатные ограждения, шоурум «STICKER MOTORS», фудтрак, тюнинг-мастерская, парковка | сумерки, неон, светлячки |
+| Statue | парк: дорожки с фонарями, живая изгородь, клумбы, пруд с кувшинками, лес | утро |
+| House | пригород: улица с фонарями, соседние дома, лимонадный киоск, батут, будка, пикник и гриль | солнечный полдень |
+| Mansion | поместье: подъездная аллея, круговой фонтан, регулярные сады с топиари, ворота, беседка с розами, теннисный корт | поздний золотой вечер, лепестки |
+| Airplane | аэропорт: взлётная полоса с огнями, терминал «STICKER AIR», диспетчерская вышка, ангар, багажные тележки | ясный день |
+| Palace | королевские сады: ров с настоящей водой, мост с фонарями, аллея с красной дорожкой и флагами, сады | закат с розовыми облаками |
+
+* **Вода** (`Decor.Water`) на сервере превращается в настоящую воду Terrain с песчаным дном и берегом.
+* **Свет**: `LightingController` при входе в матч плавно переводит время суток, атмосферу, bloom, цветокоррекцию, лучи солнца и облака в пресет уровня из `Shared/LightingConfig`, а после матча возвращает лобби.
+* **Лобби**: пруд с утками, кувшинками, камышом и мостками; стена-фотозона с наклейками «STICK • PEEL • REPEAT»; арка «WELCOME!» с шариками; флаги и флажки по дороге к кругам; гигантский автомат с капсулами; гирлянды над дорожками; воздушные шары в небе и холмы на горизонте.
+* **Наклейки** нарисованы с белой вырубной кромкой и глянцевым бликом, как настоящий винил.
+* В конце уровня над объектом салют, когда открыто окно, мир за ним мягко размывается.
+
 ## Звук
 
-Все звуки — в `Shared/SoundConfig`, проигрываются через `SoundManager` по имени. Музыка (лобби, уровень, экран результатов) и джинглы (level up, редкая наклейка, покупка) — треки из библиотеки Roblox, ID взяты из официальной документации Roblox (Creator Docs), они доступны в любой игре. Частые короткие эффекты (отрыв, щелчки) — встроенные звуки клиента. Любой ID можно заменить на звук из Creator Store. Громкость музыки и эффектов — в настройках.
+Все звуки лежат в `Shared/SoundConfig` и проигрываются через `SoundManager` по имени. У каждого звука есть **цепочка запасных ID** (`SoundIds`): менеджер в фоне проверяет первый ID через `ContentProvider:PreloadAsync`, и если Roblox не может его загрузить (звук удалён, приватный или на модерации), переключается на следующий. Последний в цепочке всегда встроенный звук клиента, так что тишины не будет.
+
+* **Отклеивание**: шорох ткани при захвате, бумажный хруст при отрыве, мягкий «поп».
+* **Награды**: звон монетки за наклейку, колокольчик за комбо, магический перелив за редкую наклейку, джинглы level up и победы, салют.
+* **Интерфейс**: мягкие тональные клики, «блип» для уведомлений, воздушный whoosh для окон.
+* **Музыка и фон окружения** в отдельных каналах с плавной сменой: в лобби весёлый трек и шелест листвы; в городе гул улицы; в аэропорту ветер; у поместья и дворца «королевская» музыка (`SoundConfig.Themes`). Под джинглами музыка приглушается.
+* Источники: библиотека Pro Sound Effects от Roblox (ID 91xxxxxxxx), музыка APM из официальной документации Roblox, популярные открытые эффекты из Creator Store. Громкость музыки и эффектов настраивается (фон окружения идёт по ползунку эффектов).
 
 ## Персонажи и анимации
 

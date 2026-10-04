@@ -114,6 +114,8 @@ function NotificationScreen:Toast(text: string, kind: string?)
 	Components.Pop(toast, 0.8)
 	if kind == "Error" then
 		self.Ctx.Controllers.SoundManager.Play("Error")
+	else
+		self.Ctx.Controllers.SoundManager.Play("Notify")
 	end
 	task.delay(3.2, function()
 		if toast.Parent then

@@ -435,6 +435,17 @@ export type Window = {
 }
 
 -- Modal window: flat panel, title, hairline divider, close button.
+-- Number of open windows; UIController hooks this to blur the world behind them
+local openWindows = 0
+Components.WindowsChanged = nil :: ((count: number) -> ())?
+
+local function windowsChanged(delta: number)
+	openWindows = math.max(0, openWindows + delta)
+	if Components.WindowsChanged then
+		Components.WindowsChanged(openWindows)
+	end
+end
+
 function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Window
 	local holder = Create("Frame", {
 		Name = props.Name or "Window",
@@ -512,6 +523,7 @@ function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Wind
 			scale.Scale = 0.96
 			TweenService:Create(scale, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 			playSound("Open")
+			windowsChanged(1)
 			if props.OnOpen then
 				props.OnOpen()
 			end
@@ -522,6 +534,7 @@ function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Wind
 			end
 			isOpen = false
 			holder.Visible = false
+			windowsChanged(-1)
 			if props.OnClose then
 				props.OnClose()
 			end

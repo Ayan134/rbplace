@@ -6,6 +6,7 @@
 	  ├── Geometry         decorative / structural parts (no stickers)
 	  ├── StickerSurfaces  parts that get covered with stickers (see StickerGenerator attributes)
 	  ├── Climb            trusses, scaffolding and platforms for hard-to-reach spots
+	  ├── Environment      scenery around the object (not scaled, no stickers)
 	  ├── SpawnPoint       where players appear
 	  ├── FinishArea       center of the completion celebration
 	  └── Configuration    LevelId + metadata attributes
@@ -56,6 +57,7 @@ function BuildKit.new(levelId: string, scaleOverride: number?)
 		Geometry = folder("Geometry"),
 		StickerSurfaces = folder("StickerSurfaces"),
 		Climb = folder("Climb"),
+		Environment = folder("Environment"),
 		LevelId = levelId,
 		Scale = scaleOverride or (levelInfo and levelInfo.ModelScale) or 1,
 	}, BuildKit)
@@ -132,6 +134,11 @@ function BuildKit:Surface(props: PartProps, zone: string?, attributes: { [string
 		end
 	end
 	return part
+end
+
+-- Scenery part around the object: authored in final studs (not scaled)
+function BuildKit:Decor(props: PartProps): BasePart
+	return makePart(props, self.Environment, 1)
 end
 
 -- Climbable truss

@@ -4,6 +4,7 @@
 ]]
 
 local BuildKit = require(script.Parent.BuildKit)
+local Decor = require(script.Parent.Parent.Systems.Decor)
 
 local WALL = Color3.fromRGB(246, 226, 196)
 local TRIM = Color3.fromRGB(255, 255, 255)
@@ -127,6 +128,87 @@ return function(): Model
 	kit:Truss(Vector3.new(39.2, 1, -5), 11.5)
 	kit:Truss(Vector3.new(21.4, 1, 10), 14.5)
 	kit:Stairs(Vector3.new(24.4, 0, 18), Vector3.new(-1, 0, 0), 10, 4, Color3.fromRGB(150, 110, 80))
+
+	------------------------------------------------------------------
+	-- Environment: a sunny suburban street
+	------------------------------------------------------------------
+	local env = kit.Environment
+	local S = kit.Scale
+	local rng = Random.new(404)
+	local roadZ = -66
+
+	Decor.Road(env, CFrame.new(0, 0, roadZ) * CFrame.Angles(0, math.pi / 2, 0), 400, 16)
+	-- Driveway connection to the street
+	kit:Decor({ Name = "DrivewayLink", Size = Vector3.new(16 * S, 0.12, 6), CFrame = CFrame.new(29 * S, 0.3, -55), Color = Color3.fromRGB(120, 120, 126), Material = Enum.Material.Asphalt })
+	Decor.Car(env, CFrame.new(29 * S, 0.3, -38) * CFrame.Angles(0, 0, 0), Color3.fromRGB(70, 130, 220))
+
+	for x = -160, 160, 40 do
+		Decor.Lamp(env, Vector3.new(x, 0.5, roadZ + 11), 10)
+	end
+
+	-- Neighbour houses
+	local neighbours = {
+		{ Vector3.new(-125, 0, -10), Color3.fromRGB(196, 222, 240), Color3.fromRGB(80, 100, 150) },
+		{ Vector3.new(140, 0, -12), Color3.fromRGB(244, 230, 190), Color3.fromRGB(150, 90, 60) },
+		{ Vector3.new(-60, 0, -128), Color3.fromRGB(214, 236, 206), Color3.fromRGB(70, 120, 80) },
+		{ Vector3.new(40, 0, -128), Color3.fromRGB(240, 210, 220), Color3.fromRGB(170, 70, 90) },
+		{ Vector3.new(130, 0, -128), Color3.fromRGB(250, 240, 230), Color3.fromRGB(90, 90, 100) },
+	}
+	for _, def in ipairs(neighbours) do
+		local position = def[1]
+		local cf = CFrame.lookAt(position, Vector3.new(position.X, 0, roadZ))
+		Decor.Building(env, cf, Vector3.new(34, 13, 26), def[2], { Roof = "Gable", RoofColor = def[3], Floors = 1, DoorColor = def[3] })
+		Decor.Tree(env, (cf * CFrame.new(-22, 0, -12)).Position, 1.1, if rng:NextNumber() < 0.5 then "Round" else "Autumn", rng)
+		Decor.Bush(env, (cf * CFrame.new(10, 0, -16)).Position, 3.5)
+		Decor.Bush(env, (cf * CFrame.new(-8, 0, -16)).Position, 3.5)
+		local post, postCF = BuildKit.VerticalCylinder((cf * CFrame.new(14, 0, -22)).Position + Vector3.new(0, 1.7, 0), 3.4, 0.4)
+		kit:Decor({ Name = "MailboxPost", Size = post, CFrame = postCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(120, 86, 60), Material = Enum.Material.Wood })
+		kit:Decor({ Name = "Mailbox", Size = Vector3.new(1.4, 1.2, 2.2), CFrame = cf * CFrame.new(14, 3.8, -22), Color = def[3], Material = Enum.Material.Metal })
+	end
+
+	-- Backyard: trampoline, doghouse, garden
+	local yard = Vector3.new(-28, 0, 35)
+	local tramp, trampCF = BuildKit.VerticalCylinder(yard + Vector3.new(0, 2.4, 0), 0.4, 14)
+	kit:Decor({ Name = "TrampolineRing", Size = tramp, CFrame = trampCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(60, 150, 230) })
+	local mat, matCF = BuildKit.VerticalCylinder(yard + Vector3.new(0, 2.5, 0), 0.4, 12)
+	kit:Decor({ Name = "TrampolineMat", Size = mat, CFrame = matCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(30, 30, 36), Material = Enum.Material.Fabric })
+	for i = 0, 5 do
+		local angle = i / 6 * math.pi * 2
+		kit:Decor({ Name = "TrampolineLeg", Size = Vector3.new(0.4, 2.4, 0.4), CFrame = CFrame.new(yard + Vector3.new(math.cos(angle) * 6.6, 1.2, math.sin(angle) * 6.6)), Color = Color3.fromRGB(80, 80, 90), Material = Enum.Material.Metal })
+	end
+	local dog = Vector3.new(42, 0, 36)
+	kit:Decor({ Name = "Doghouse", Size = Vector3.new(5, 4, 6), CFrame = CFrame.new(dog + Vector3.new(0, 2, 0)), Color = Color3.fromRGB(200, 70, 60), Material = Enum.Material.WoodPlanks })
+	kit:Decor({ Name = "DoghouseRoof", Class = "WedgePart", Size = Vector3.new(6, 2.4, 3.4), CFrame = CFrame.new(dog + Vector3.new(0, 5.2, -1.7)), Color = Color3.fromRGB(240, 240, 240), Material = Enum.Material.WoodPlanks })
+	kit:Decor({ Name = "DoghouseRoof", Class = "WedgePart", Size = Vector3.new(6, 2.4, 3.4), CFrame = CFrame.new(dog + Vector3.new(0, 5.2, 1.7)) * CFrame.Angles(0, math.pi, 0), Color = Color3.fromRGB(240, 240, 240), Material = Enum.Material.WoodPlanks })
+	kit:Decor({ Name = "DoghouseDoor", Size = Vector3.new(2, 2.4, 0.2), CFrame = CFrame.new(dog + Vector3.new(0, 1.2, -3.05)), Color = Color3.fromRGB(30, 24, 20) })
+	for i = 0, 3 do
+		Decor.FlowerBed(env, Vector3.new(-50 + i * 14, 0, 54), 4, rng)
+	end
+	for i = 0, 5 do
+		Decor.Tree(env, Vector3.new(-70 + i * 28, 0, 85 + rng:NextNumber(-6, 6)), rng:NextNumber(1.1, 1.5), "Round", rng)
+	end
+
+	-- Street life: a lemonade stand, cars parked across the street, balloons
+	Decor.Stall(env, CFrame.lookAt(Vector3.new(-30, 0.3, -53), Vector3.new(-30, 0.3, roadZ)), Color3.fromRGB(255, 205, 60), "LEMONADE 🍋")
+	Decor.Balloons(env, Vector3.new(-26, 3.6, -53), 4, rng)
+	for _, x in ipairs({ -110, -20, 85 }) do
+		local colors = { Color3.fromRGB(230, 70, 70), Color3.fromRGB(240, 240, 245), Color3.fromRGB(90, 190, 140) }
+		Decor.Car(env, CFrame.new(x, 0.2, roadZ - 4.5) * CFrame.Angles(0, math.rad(90), 0), colors[rng:NextInteger(1, #colors)])
+	end
+	-- Backyard grill and picnic table
+	kit:Decor({ Name = "PicnicTable", Size = Vector3.new(8, 0.5, 3.4), CFrame = CFrame.new(8, 2.6, 36), Color = Color3.fromRGB(176, 120, 72), Material = Enum.Material.WoodPlanks })
+	for _, z in ipairs({ 33.4, 38.6 }) do
+		kit:Decor({ Name = "PicnicBench", Size = Vector3.new(8, 0.4, 1.2), CFrame = CFrame.new(8, 1.5, z), Color = Color3.fromRGB(160, 108, 64), Material = Enum.Material.WoodPlanks })
+	end
+	for _, x in ipairs({ 5, 11 }) do
+		kit:Decor({ Name = "PicnicLeg", Size = Vector3.new(0.5, 2.4, 6.4), CFrame = CFrame.new(x, 1.2, 36), Color = Color3.fromRGB(150, 100, 60), Material = Enum.Material.Wood })
+	end
+	local grill, grillCF = BuildKit.VerticalCylinder(Vector3.new(22, 3, 37), 1.6, 2.6)
+	kit:Decor({ Name = "Grill", Size = grill, CFrame = grillCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(30, 30, 34), Material = Enum.Material.Metal })
+	kit:Decor({ Name = "GrillLegs", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(22, 1.1, 37), Color = Color3.fromRGB(40, 40, 46), Material = Enum.Material.Metal })
+
+	Decor.Backdrop(env, Vector3.zero, 235, rng)
+	Decor.AmbientMotes(env, Vector3.zero, 80, "Sunlight")
 
 	kit:SetSpawn(Vector3.new(0, 3, -40), Vector3.zero)
 	kit:SetFinish(Vector3.new(5, 12, 0), Vector3.new(64, 26, 40))

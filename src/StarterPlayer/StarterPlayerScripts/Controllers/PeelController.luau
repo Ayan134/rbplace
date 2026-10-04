@@ -395,6 +395,11 @@ function PeelController.Start()
 		if active[record] then
 			stopLocal(record, false)
 		end
+		if reason == "Gone" and record.Alive then
+			-- The server already removed it (we missed the update): drop it locally too
+			record.Alive = false
+			renderer.Detach(session, record, true)
+		end
 		if reason == "TooFar" then
 			hint("Get closer to peel that sticker!")
 		elseif reason == "Capacity" then
