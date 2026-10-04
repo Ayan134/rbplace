@@ -9,6 +9,8 @@
 	    so it feels instant; the server still validates Start and Complete
 	  * releasing PEEL cancels unfinished stickers - their progress is kept on the server
 	  * rejected requests are rolled back (e.g. "TooFast" completions are retried)
+	  * peeled stickers go into the bag; a full bag stops peeling until it is emptied
+	    into a trash can (BagFull fires so the UI can point the way)
 ]]
 
 local Players = game:GetService("Players")
@@ -30,6 +32,7 @@ local PeelController = {}
 
 PeelController.ActiveChanged = Signal.new() -- (activeCount, capacity)
 PeelController.RewardReceived = Signal.new() -- (reward, record)
+PeelController.BagFull = Signal.new() -- () the player tried to peel with a full bag
 
 local Controllers
 local holding = false
@@ -53,6 +56,25 @@ local function activeCount(): number
 		n += 1
 	end
 	return n
+end
+
+-- Free bag space, counting stickers that are being peeled or waiting for the server
+local function bagRoom(): number
+	local data = Controllers.DataController.Get()
+	local stats = Controllers.DataController.GetStats()
+	local pending = activeCount()
+	for _ in pairs(awaiting) do
+		pending += 1
+	end
+	return stats.BagCapacity - PlayerStats.GetBagCount(data) - pending
+end
+
+local lastBagFull = 0
+local function bagFull()
+	if os.clock() - lastBagFull > 2.5 then
+		lastBagFull = os.clock()
+		PeelController.BagFull:Fire()
+	end
 end
 
 local function freeSlot(capacity: number): number
@@ -109,7 +131,7 @@ local function getMarker(slot: number): BillboardGui
 	index.Size = UDim2.fromOffset(26, 26)
 	index.Position = UDim2.fromOffset(4, 4)
 	index.BackgroundColor3 = Color3.fromRGB(110, 222, 164)
-	index.Font = Enum.Font.GothamBold
+	index.Font = Enum.Font.FredokaOne
 	index.TextScaled = true
 	index.TextColor3 = Color3.fromRGB(18, 18, 22)
 	index.Text = tostring(slot)
@@ -121,7 +143,7 @@ local function getMarker(slot: number): BillboardGui
 	percent.Size = UDim2.new(1, -36, 0, 26)
 	percent.Position = UDim2.fromOffset(34, 4)
 	percent.BackgroundTransparency = 1
-	percent.Font = Enum.Font.GothamBold
+	percent.Font = Enum.Font.FredokaOne
 	percent.TextScaled = true
 	percent.TextColor3 = Color3.new(1, 1, 1)
 	percent.Text = "0%"
@@ -238,6 +260,12 @@ local function tryFill()
 	local stats = Controllers.DataController.GetStats()
 	local capacity = stats.Capacity
 	if activeCount() >= capacity then
+		return
+	end
+	if bagRoom() <= 0 then
+		if activeCount() == 0 then
+			bagFull()
+		end
 		return
 	end
 	if os.clock() - lastStart < (if activeCount() == 0 then 0 else Config.Peel.ChainStagger) then
@@ -400,7 +428,9 @@ function PeelController.Start()
 			record.Alive = false
 			renderer.Detach(session, record, true)
 		end
-		if reason == "TooFar" then
+		if reason == "BagFull" then
+			bagFull()
+		elseif reason == "TooFar" then
 			hint("Get closer to peel that sticker!")
 		elseif reason == "Capacity" then
 			hint("Upgrade Sticker Capacity to peel more at once!")
@@ -424,12 +454,9 @@ function PeelController.Start()
 			return
 		end
 		local effects = Controllers.EffectsController
-		local isPractice = session.Kind == "Showcase"
 		local position = record.Position + record.Normal * 0.6
-		if isPractice then
-			effects.FloatingText(position, "Practice!", Color3.fromRGB(200, 220, 255), 0.8)
-		elseif reward.Coins > 0 then
-			local text = "+" .. Utility.FormatNumber(reward.Coins) .. " Coins"
+		if reward.Coins > 0 then
+			local text = "+" .. Utility.FormatMoney(reward.Coins)
 			local color = Color3.fromRGB(255, 220, 70)
 			local size = 1
 			if record.Info.IsRare then

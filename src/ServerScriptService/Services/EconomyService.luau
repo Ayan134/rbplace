@@ -2,6 +2,9 @@
 	EconomyService
 	The only place that changes Coins, Gems and XP. Computes sticker rewards (combo,
 	luck, reward multiplier), level-completion rewards, XP and level-ups.
+
+	Peeled stickers go into the player's bag; their value is only paid out when the
+	bag is emptied into a trash can (SellBag).
 ]]
 
 local Players = game:GetService("Players")
@@ -138,38 +141,40 @@ export type StickerReward = {
 }
 
 --[[
-	Awards a peeled sticker.
+	Awards a peeled sticker: it goes into the bag (value paid when sold), XP and gems
+	are granted right away.
 	context = {
 		LevelInfo = LevelConfig entry,
 		Difficulty = DifficultyConfig entry,
-		Practice = boolean,      -- lobby showcase: no rewards
+		Practice = boolean,      -- lobby showcase: half value, no XP
 		PlayerCount = number,
 	}
 ]]
 function EconomyService.AwardSticker(player: Player, sticker, context): StickerReward
 	local combo, comboMultiplier = EconomyService.RegisterCombo(player)
-	if context.Practice then
-		return { Coins = 0, XP = 0, Combo = combo, ComboMultiplier = comboMultiplier, Lucky = false, Gems = 0 }
-	end
-
 	local stats = EconomyService.GetStats(player)
 	local info = StickerConfig.Get(sticker.Type)
 	local lucky = rng:NextNumber() < stats.Luck * Config.Rewards.LuckyChanceScale
-	local coins = sticker.BaseReward * stats.RewardMultiplier * comboMultiplier * (if lucky then 2 else 1)
-	coins = math.max(1, math.floor(coins + 0.5))
-	local xp = math.max(1, math.floor(info.XP * context.Difficulty.XPMultiplier + 0.5))
+	local value = sticker.BaseReward * stats.RewardMultiplier * comboMultiplier * (if lucky then 2 else 1)
+	if context.Practice then
+		value *= Config.Bag.PracticeValue
+	end
+	local coins = math.max(1, math.floor(value + 0.5))
+	local xp = if context.Practice then 0 else math.max(1, math.floor(info.XP * context.Difficulty.XPMultiplier + 0.5))
 
 	local gems = 0
-	if sticker.Type == "Diamond" then
-		gems = Config.Rewards.DiamondGems
-	elseif sticker.Type == "Legendary" then
-		gems = Config.Rewards.LegendaryGems
+	if not context.Practice then
+		if sticker.Type == "Diamond" then
+			gems = Config.Rewards.DiamondGems
+		elseif sticker.Type == "Legendary" then
+			gems = Config.Rewards.LegendaryGems
+		end
 	end
 
 	PlayerDataService.Update(player, function(data)
-		data.Coins += coins
+		data.Bag.Count += 1
+		data.Bag.Value += coins
 		data.Gems += gems
-		data.Statistics.CoinsEarned += coins
 		data.Statistics.GemsEarned += gems
 		data.Statistics.StickersPeeled += 1
 		if (context.PlayerCount or 1) > 1 then
@@ -183,7 +188,6 @@ function EconomyService.AwardSticker(player: Player, sticker, context): StickerR
 	EconomyService.AddXP(player, xp)
 
 	QuestService.Track(player, "StickersPeeled", 1)
-	QuestService.Track(player, "CoinsEarned", coins)
 	if info.IsRare then
 		QuestService.Track(player, "RareFound", 1)
 	end
@@ -192,6 +196,33 @@ function EconomyService.AwardSticker(player: Player, sticker, context): StickerR
 	end
 
 	return { Coins = coins, XP = xp, Combo = combo, ComboMultiplier = comboMultiplier, Lucky = lucky, Gems = gems }
+end
+
+-- Whether the bag has room for `extra` more stickers on top of what it carries
+function EconomyService.HasBagRoom(player: Player, extra: number?): boolean
+	local data = PlayerDataService.Get(player)
+	if not data then
+		return false
+	end
+	local stats = PlayerStats.Compute(data)
+	return PlayerStats.GetBagCount(data) + (extra or 0) < stats.BagCapacity
+end
+
+-- Empties the bag into a trash can and pays out its value. Returns stickers sold and coins.
+function EconomyService.SellBag(player: Player): (number, number)
+	local data = PlayerDataService.Get(player)
+	if not data or data.Bag.Count <= 0 then
+		return 0, 0
+	end
+	local count, value = data.Bag.Count, data.Bag.Value
+	PlayerDataService.Update(player, function(d)
+		d.Coins += value
+		d.Statistics.CoinsEarned += value
+		d.Bag.Count = 0
+		d.Bag.Value = 0
+	end)
+	QuestService.Track(player, "CoinsEarned", value)
+	return count, value
 end
 
 function EconomyService.ResetCombo(player: Player)

@@ -42,7 +42,7 @@ function UpgradeService.Buy(player: Player, upgradeId: any)
 	end
 	local cost = UpgradeConfig.GetCost(upgradeId, current)
 	if not EconomyService.TrySpend(player, "Coins", cost) then
-		return { Success = false, Message = "Not enough Coins" }
+		return { Success = false, Message = "Not enough money" }
 	end
 	PlayerDataService.Update(player, function(d)
 		d.Upgrades[upgradeId] = current + 1

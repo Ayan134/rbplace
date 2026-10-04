@@ -20,6 +20,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Decor = require(script.Parent.Parent.Systems.Decor)
 local LevelConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("LevelConfig"))
 
 local BuildKit = {}
@@ -245,10 +246,60 @@ function BuildKit:SetFinish(position: Vector3, size: Vector3)
 	return finish
 end
 
+-- Ground footprint (min, max) of the stickered surfaces
+local function footprint(folder: Instance): (Vector3, Vector3)
+	local min = Vector3.new(math.huge, 0, math.huge)
+	local max = Vector3.new(-math.huge, 0, -math.huge)
+	for _, part in ipairs(folder:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local cf, size = part.CFrame, part.Size
+			local extent = Vector3.new(
+				math.abs(cf.RightVector.X) * size.X + math.abs(cf.UpVector.X) * size.Y + math.abs(cf.LookVector.X) * size.Z,
+				0,
+				math.abs(cf.RightVector.Z) * size.X + math.abs(cf.UpVector.Z) * size.Y + math.abs(cf.LookVector.Z) * size.Z
+			) / 2
+			min = min:Min(cf.Position - extent)
+			max = max:Max(cf.Position + extent)
+		end
+	end
+	return Vector3.new(min.X, 0, min.Z), Vector3.new(max.X, 0, max.Z)
+end
+
+-- Trash cans on every side of the object (short trips to empty the bag) and a shop
+-- stall next to the spawn. Levels can override the can spots with kit.TrashCanSpots.
+function BuildKit:PlaceServices()
+	local spots = self.TrashCanSpots
+	if not spots then
+		local min, max = footprint(self.StickerSurfaces)
+		if min.X == math.huge then
+			min, max = Vector3.new(-20, 0, -20), Vector3.new(20, 0, 20)
+		end
+		local center = (min + max) / 2
+		local gap = 9
+		spots = {
+			Vector3.new(center.X, 0, max.Z + gap),
+			Vector3.new(center.X, 0, min.Z - gap),
+			Vector3.new(max.X + gap, 0, center.Z),
+			Vector3.new(min.X - gap, 0, center.Z),
+		}
+	end
+	for _, spot in ipairs(spots) do
+		Decor.TrashCan(self.Environment, spot)
+	end
+	local spawn = self.Model:FindFirstChild("SpawnPoint")
+	if spawn and spawn:IsA("BasePart") and not self.NoShopStall then
+		local ground = spawn.CFrame - Vector3.new(0, spawn.CFrame.Position.Y, 0)
+		local position = (ground * CFrame.new(11, 0, 3)).Position
+		local facing = (ground * CFrame.new(0, 0, -6)).Position
+		Decor.ShopStall(self.Environment, CFrame.lookAt(position, Vector3.new(facing.X, 0, facing.Z)))
+	end
+end
+
 function BuildKit:Finish(): Model
 	if not self.Model:FindFirstChild("SpawnPoint") then
 		self:SetSpawn(Vector3.new(0, 3, 40), Vector3.zero)
 	end
+	self:PlaceServices()
 	if not self.Model:FindFirstChild("FinishArea") then
 		local cf, size = self.Model:GetBoundingBox()
 		self:SetFinish(cf.Position / self.Scale, size / self.Scale)

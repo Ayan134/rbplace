@@ -33,6 +33,19 @@ LightingConfig.Presets = {
 		Clouds = { Cover = 0.55, Density = 0.55, Color = rgb(255, 255, 255) },
 	},
 
+	-- Bright sunny backyard
+	Pile = {
+		ClockTime = 13.6,
+		Brightness = 3.2,
+		Ambient = rgb(98, 98, 112),
+		OutdoorAmbient = rgb(146, 146, 160),
+		Atmosphere = { Density = 0.24, Offset = 0.1, Haze = 0.9, Glare = 0.2, Color = rgb(200, 224, 255), Decay = rgb(130, 166, 220) },
+		Bloom = { Intensity = 0.3, Size = 22, Threshold = 1.7 },
+		Color = { Brightness = 0.02, Contrast = 0.08, Saturation = 0.2, TintColor = rgb(255, 253, 248) },
+		SunRays = { Intensity = 0.05, Spread = 0.7 },
+		Clouds = { Cover = 0.45, Density = 0.4, Color = rgb(255, 255, 255) },
+	},
+
 	-- Warm golden hour over the town square
 	Fountain = {
 		ClockTime = 16.6,

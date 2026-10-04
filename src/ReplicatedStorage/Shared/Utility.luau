@@ -17,6 +17,14 @@ end
 
 local SUFFIXES = { "", "K", "M", "B", "T", "Qd" }
 
+-- Money is shown as dollars: 1234 -> "$1,234", big values abbreviated ("$1.2M")
+function Utility.FormatMoney(value: number): string
+	if value >= 1e6 then
+		return "$" .. Utility.Abbreviate(value)
+	end
+	return "$" .. Utility.FormatNumber(value)
+end
+
 function Utility.Abbreviate(value: number): string
 	if math.abs(value) < 10000 then
 		return Utility.FormatNumber(value)

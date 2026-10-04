@@ -59,8 +59,8 @@ local pool: { BasePart } = {}
 local lowVFX = false
 
 -- Sticker artwork (emoji / image) is only drawn on the nearest stickers (LOD)
-local ART_RADIUS = 55
-local ART_MAX = 350
+local ART_RADIUS = 60
+local ART_MAX = 450
 local ART_INTERVAL = 0.25
 local artPool: { SurfaceGui } = {}
 local artRecords: { [any]: boolean } = {}

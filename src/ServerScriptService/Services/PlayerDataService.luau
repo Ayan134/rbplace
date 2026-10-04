@@ -19,6 +19,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local BagConfig = require(Shared.BagConfig)
 local Config = require(Shared.Config)
 local Signal = require(Shared.Signal)
 local Utility = require(Shared.Utility)
@@ -36,9 +37,12 @@ local DEFAULT_DATA = {
 	Gems = 0,
 	XP = 0,
 	Level = 1,
-	UnlockedLevels = { Fountain = true },
+	UnlockedLevels = { Pile = true, Fountain = true },
 	UnlockedTools = { Hand = true },
 	EquippedTool = "Hand",
+	UnlockedBags = { Pocket = true },
+	EquippedBag = "Pocket",
+	Bag = { Count = 0, Value = 0 }, -- stickers carried and what they sell for
 	Upgrades = {
 		PeelPower = 0,
 		PeelSpeed = 0,
@@ -153,9 +157,16 @@ local function sanitize(data)
 	data.XP = math.max(0, tonumber(data.XP) or 0)
 	data.UnlockedTools.Hand = true
 	data.UnlockedLevels.Fountain = true
+	data.UnlockedLevels.Pile = true
 	if not data.UnlockedTools[data.EquippedTool] then
 		data.EquippedTool = "Hand"
 	end
+	data.UnlockedBags.Pocket = true
+	if not BagConfig.IsValid(data.EquippedBag) or not data.UnlockedBags[data.EquippedBag] then
+		data.EquippedBag = "Pocket"
+	end
+	data.Bag.Count = math.max(0, math.floor(tonumber(data.Bag.Count) or 0))
+	data.Bag.Value = math.max(0, math.floor(tonumber(data.Bag.Value) or 0))
 	return data
 end
 

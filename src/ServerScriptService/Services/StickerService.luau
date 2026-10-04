@@ -300,6 +300,10 @@ local function handleStart(player: Player, session: Session, sticker)
 	if activeCount >= stats.Capacity then
 		return reject(player, session, sticker.Id, "Capacity")
 	end
+	-- Stickers being peeled right now will also land in the bag
+	if PlayerStats.GetBagCount(data) + activeCount >= stats.BagCapacity then
+		return reject(player, session, sticker.Id, "BagFull")
+	end
 
 	local fullDuration = PlayerStats.GetPeelDuration(stats, sticker.Health)
 	local remaining = math.max(0.1, fullDuration * (1 - sticker.Progress))

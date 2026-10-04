@@ -44,13 +44,12 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	local top = Components.Frame({
 		Name = "Progress",
 		Size = UDim2.fromOffset(560, 104),
-		Position = UDim2.new(0.5, 0, 0, 70),
+		Position = UDim2.new(0.5, 0, 0, 14),
 		AnchorPoint = Vector2.new(0.5, 0),
 		Color = Theme.Colors.Panel,
-		Transparency = 0.1,
+		Transparency = 0.05,
 		Corner = 18,
-		Stroke = 3,
-		StrokeColor = Theme.Colors.Cyan,
+		Stroke = 3.5,
 		Parent = gui,
 	})
 	self.LevelName = Components.Label({ Name = "LevelName", Text = "FOUNTAIN", Size = UDim2.new(1, -24, 0, 30), Position = UDim2.fromOffset(12, 6), MaxTextSize = 28, Stroke = 2, Parent = top })
@@ -59,36 +58,16 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	self.Count = Components.Label({ Name = "Count", Text = "0 / 0 stickers", Size = UDim2.new(1, -24, 0, 22), Position = UDim2.fromOffset(12, 38), Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 18, Parent = top })
 	self.Bar = Components.ProgressBar({ Name = "Bar", Size = UDim2.new(1, -28, 0, 30), Position = UDim2.fromOffset(14, 64), Color = Theme.Colors.Green, MaxTextSize = 20, Stroke = 2, StrokeColor = Theme.Colors.PanelLight, Parent = top })
 
-	-- Top bar (coins etc.) reused from the lobby HUD
-	local LobbyHUD = require(script.Parent.LobbyHUD)
-	self.TopBar = LobbyHUD.BuildTopBar(gui)
-
-	-- Player card (left)
-	local playerCard = Components.Frame({
-		Name = "Player",
-		Size = UDim2.fromOffset(230, 92),
-		Position = UDim2.new(0, 16, 0, 190),
-		Color = Theme.Colors.Panel,
-		Transparency = 0.15,
-		Corner = 16,
-		Stroke = 2,
-		Parent = gui,
-	})
-	Components.Avatar(LOCAL_PLAYER.UserId, { Size = UDim2.fromOffset(70, 70), Position = UDim2.fromOffset(11, 11), StrokeColor = Theme.Colors.Pink, Parent = playerCard })
-	Components.Label({ Text = LOCAL_PLAYER.DisplayName, Size = UDim2.new(1, -96, 0, 24), Position = UDim2.fromOffset(90, 10), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 20, Stroke = 1.5, Parent = playerCard })
-	self.PlayerLevel = Components.Label({ Text = "LEVEL 1", Size = UDim2.new(1, -96, 0, 20), Position = UDim2.fromOffset(90, 36), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, Color = Theme.Colors.XP, MaxTextSize = 16, Parent = playerCard })
-	self.PlayerPeeled = Components.Label({ Text = "0 peeled", Size = UDim2.new(1, -96, 0, 20), Position = UDim2.fromOffset(90, 58), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 16, Parent = playerCard })
-
 	-- Team (right)
 	local team = Components.Frame({
 		Name = "Team",
 		Size = UDim2.fromOffset(240, 60),
-		Position = UDim2.new(1, -16, 0, 190),
+		Position = UDim2.new(1, -20, 0, 84),
 		AnchorPoint = Vector2.new(1, 0),
 		Color = Theme.Colors.Panel,
-		Transparency = 0.15,
+		Transparency = 0.1,
 		Corner = 16,
-		Stroke = 2,
+		Stroke = 3,
 		Parent = gui,
 	})
 	team.AutomaticSize = Enum.AutomaticSize.Y
@@ -97,12 +76,12 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	Components.List(teamList, Enum.FillDirection.Vertical, 6)
 	self.TeamList = teamList
 
-	-- Bottom: tool + hint
+	-- Bottom right: tool + hint
 	local toolPanel = Components.Frame({
 		Name = "Tool",
-		Size = UDim2.fromOffset(300, 66),
-		Position = UDim2.new(0.5, 0, 1, -16),
-		AnchorPoint = Vector2.new(0.5, 1),
+		Size = UDim2.fromOffset(280, 66),
+		Position = UDim2.new(1, -20, 1, -18),
+		AnchorPoint = Vector2.new(1, 1),
 		Color = Theme.Colors.Panel,
 		Transparency = 0.1,
 		Corner = 16,
@@ -115,7 +94,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	self.ToolStroke = toolPanel:FindFirstChildOfClass("UIStroke")
 
 	-- Multi-peel slots indicator
-	self.Slots = Components.Label({ Text = "", Size = UDim2.fromOffset(300, 24), Position = UDim2.new(0.5, 0, 1, -88), AnchorPoint = Vector2.new(0.5, 1), Font = Theme.Fonts.Bold, MaxTextSize = 18, Stroke = 1.5, Parent = gui })
+	self.Slots = Components.Label({ Text = "", Size = UDim2.fromOffset(280, 24), Position = UDim2.new(1, -20, 1, -92), AnchorPoint = Vector2.new(1, 1), Font = Theme.Fonts.Bold, MaxTextSize = 18, Stroke = 1.5, Parent = gui })
 
 	-- Combo
 	local combo = Components.Create("Frame", { Name = "Combo", Size = UDim2.fromOffset(220, 90), Position = UDim2.new(1, -40, 0.62, 0), AnchorPoint = Vector2.new(1, 0.5), BackgroundTransparency = 1, Visible = false, Parent = gui })
@@ -126,7 +105,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	Components.Create("UIScale", { Parent = combo })
 
 	-- Finder hint
-	self.Finder = Components.Label({ Text = "", Size = UDim2.fromOffset(520, 28), Position = UDim2.new(0.5, 0, 0, 180), AnchorPoint = Vector2.new(0.5, 0), Font = Theme.Fonts.Bold, Color = Theme.Colors.Yellow, MaxTextSize = 20, Stroke = 2, Visible = false, Parent = gui })
+	self.Finder = Components.Label({ Text = "", Size = UDim2.fromOffset(520, 28), Position = UDim2.new(0.5, 0, 0, 128), AnchorPoint = Vector2.new(0.5, 0), Font = Theme.Fonts.Bold, Color = Theme.Colors.Yellow, MaxTextSize = 20, Stroke = 2, Visible = false, Parent = gui })
 
 	-- Mobile PEEL button
 	local peelButton = Components.Create("TextButton", {
@@ -164,12 +143,12 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 		Name = "Leave",
 		Text = "Leave",
 		Size = UDim2.fromOffset(120, 40),
-		Position = UDim2.new(1, -16, 0, 16),
+		Position = UDim2.new(1, -20, 0, 18),
 		AnchorPoint = Vector2.new(1, 0),
 		Color = Theme.Colors.Red,
 		MaxTextSize = 18,
 		OnClick = function()
-			ctx.UI.Confirm("Leave this level? Your sticker coins are kept, but you'll miss the completion reward.", function()
+			ctx.UI.Confirm("Leave this level? Stickers in your bag are kept, but you'll miss the completion reward.", function()
 				Remotes.LeaveMatch:FireServer()
 			end)
 		end,
@@ -226,8 +205,6 @@ function GameplayScreen:UpdateData(data)
 	if not data then
 		return
 	end
-	self.TopBar.Update(data)
-	self.PlayerLevel.Text = "LEVEL " .. data.Level
 	local tool = ToolConfig.Get(data.EquippedTool) or ToolConfig.Tools.Hand
 	self.ToolIcon.Text = tool.Icon
 	self.ToolName.Text = tool.Name
@@ -338,7 +315,6 @@ function GameplayScreen:Tick()
 	if not self.Stopped and self.StartClock then
 		self.Timer.Text = Utility.FormatTime(os.clock() - self.StartClock)
 	end
-	self.PlayerPeeled.Text = Utility.FormatNumber(self.MyPeeled or 0) .. " peeled"
 
 	-- Combo countdown
 	if self.ComboFrame.Visible then

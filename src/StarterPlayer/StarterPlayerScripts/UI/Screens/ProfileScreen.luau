@@ -29,6 +29,7 @@ function ProfileScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "ProfileWindow",
+		Icon = "👤",
 		Title = "Profile",
 		Color = Theme.Colors.Cyan,
 		Size = UDim2.fromOffset(980, 600),

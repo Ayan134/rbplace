@@ -1,18 +1,16 @@
 --[[
 	CameraController
-	Camera limits per area and the level-complete orbit around the cleaned object.
+	The game is first person (StarterPlayer.CameraMode = LockFirstPerson); this controller
+	only runs the level-complete orbit around the cleaned object and then hands the
+	camera back.
 ]]
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local LevelConfig = require(Shared.LevelConfig)
-
-local LOCAL_PLAYER = Players.LocalPlayer
-local LOBBY_ZOOM = 60
 
 local CameraController = {}
 
@@ -58,12 +56,8 @@ function CameraController.Init(controllers)
 end
 
 function CameraController.Start()
-	LOCAL_PLAYER.CameraMaxZoomDistance = LOBBY_ZOOM
 	Controllers.DataController.MatchEvent:Connect(function(eventName: string, payload)
-		if eventName == "Start" then
-			local level = LevelConfig.Get(payload.LevelId)
-			LOCAL_PLAYER.CameraMaxZoomDistance = level and level.CameraMaxZoom or 100
-		elseif eventName == "Complete" then
+		if eventName == "Complete" then
 			local match = Controllers.DataController.Match
 			local level = LevelConfig.Get(payload.LevelId)
 			if match and match.Focus and level then
@@ -71,7 +65,6 @@ function CameraController.Start()
 			end
 		elseif eventName == "Ended" then
 			CameraController.StopOrbit()
-			LOCAL_PLAYER.CameraMaxZoomDistance = LOBBY_ZOOM
 		end
 	end)
 end

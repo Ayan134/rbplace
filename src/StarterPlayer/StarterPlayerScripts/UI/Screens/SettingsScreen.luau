@@ -29,6 +29,7 @@ function SettingsScreen.new(gui: ScreenGui, ctx)
 	self.Pending = {}
 	self.Window = Components.Window(gui, {
 		Name = "SettingsWindow",
+		Icon = "⚙️",
 		Title = "Settings",
 		Color = Theme.Colors.Purple,
 		Size = UDim2.fromOffset(640, 520),

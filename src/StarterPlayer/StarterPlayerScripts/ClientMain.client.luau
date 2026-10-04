@@ -13,9 +13,12 @@ local order = {
 	"StickerRenderer",
 	"EffectsController",
 	"AnimationController",
+	"FirstPersonController",
 	"CameraController",
 	"InteractionController",
 	"PeelController",
+	"BagController",
+	"ShopDisplayController",
 	"UIController",
 }
 

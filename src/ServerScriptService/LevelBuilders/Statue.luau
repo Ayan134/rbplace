@@ -30,7 +30,7 @@ return function(): Model
 	label.BackgroundTransparency = 1
 	label.Text = "THE STICKER HERO"
 	label.TextScaled = true
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.FredokaOne
 	label.TextColor3 = Color3.fromRGB(70, 50, 20)
 	label.Parent = gui
 

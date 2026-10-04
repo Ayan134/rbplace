@@ -27,6 +27,7 @@ function LevelSelectScreen.new(gui: ScreenGui, ctx)
 	self.Difficulty = "Normal"
 	self.Window = Components.Window(gui, {
 		Name = "LevelsWindow",
+		Icon = "🗺️",
 		Title = "Levels",
 		Color = Theme.Colors.Blue,
 		Size = UDim2.fromOffset(1000, 640),
@@ -137,7 +138,7 @@ function LevelSelectScreen:Refresh()
 			end })
 		elseif levelMet then
 			button = Components.Button({
-				Text = "Unlock  ● " .. Utility.FormatNumber(level.UnlockCost),
+				Text = "Unlock  " .. Utility.FormatMoney(level.UnlockCost),
 				Color = Theme.Colors.Accent,
 				OnClick = function()
 					local result = Remotes.UnlockLevel:InvokeServer(level.LevelId)

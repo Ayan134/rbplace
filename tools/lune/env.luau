@@ -14,7 +14,24 @@ local task = require("@lune/task")
 
 local Instance = roblox.Instance
 local Vector3 = roblox.Vector3
-local CFrame = roblox.CFrame
+local RobloxCFrame = roblox.CFrame
+
+-- Lune's CFrame.lookAt mirrors the look direction along Z; this is the engine's math
+local function lookAt(at, target, up)
+	up = up or Vector3.new(0, 1, 0)
+	local look = target - at
+	if look.Magnitude < 1e-9 then
+		return RobloxCFrame.new(at.X, at.Y, at.Z)
+	end
+	look = look.Unit
+	local right = look:Cross(up)
+	if right.Magnitude < 1e-6 then
+		right = look:Cross(Vector3.new(0, 0, 1))
+	end
+	right = right.Unit
+	return RobloxCFrame.fromMatrix(at, right, right:Cross(look).Unit, -look)
+end
+local CFrame = setmetatable({ lookAt = lookAt }, { __index = RobloxCFrame })
 
 local Env = {}
 

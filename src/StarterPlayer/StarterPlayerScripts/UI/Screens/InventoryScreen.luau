@@ -25,6 +25,7 @@ function InventoryScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "InventoryWindow",
+		Icon = "🧰",
 		Title = "Inventory",
 		Color = Theme.Colors.Green,
 		Size = UDim2.fromOffset(1000, 600),

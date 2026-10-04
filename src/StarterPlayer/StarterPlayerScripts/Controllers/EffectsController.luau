@@ -5,6 +5,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
@@ -70,7 +71,7 @@ local function acquireText(): BillboardGui
 	label.Name = "Label"
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.FredokaOne
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Parent = gui
@@ -84,7 +85,7 @@ local function acquireText(): BillboardGui
 	return gui
 end
 
--- "+25 Coins" style popup that rises and fades.
+-- "+$25" style popup that rises and fades.
 function EffectsController.FloatingText(position: Vector3, text: string, color: Color3?, size: number?)
 	local gui = acquireText()
 	local label = gui:FindFirstChild("Label") :: TextLabel
@@ -154,6 +155,56 @@ function EffectsController.Confetti(amount: number?)
 			piece:Destroy()
 		end)
 	end
+end
+
+-- A handful of colorful stickers arcing from the player into the trash can
+function EffectsController.SellBurst(target: Vector3, count: number)
+	local camera = Workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local origin = camera.CFrame.Position + camera.CFrame.LookVector * 2 - Vector3.new(0, 1.2, 0)
+	local colors = { Color3.fromRGB(255, 120, 150), Color3.fromRGB(255, 210, 90), Color3.fromRGB(110, 222, 164), Color3.fromRGB(110, 190, 255), Color3.fromRGB(200, 140, 255) }
+	local pieces = math.clamp(math.floor(count / 3), 4, if lowVFX then 6 else 16)
+	for i = 1, pieces do
+		task.delay(i * 0.03, function()
+			local piece = Instance.new("Part")
+			piece.Name = "SoldSticker"
+			piece.Size = Vector3.new(0.7, 0.7, 0.06)
+			piece.Color = colors[(i % #colors) + 1]
+			piece.Material = Enum.Material.SmoothPlastic
+			piece.Anchored = true
+			piece.CanCollide = false
+			piece.CanQuery = false
+			piece.CanTouch = false
+			piece.CastShadow = false
+			piece.Parent = Workspace
+			local spread = Vector3.new(rng:NextNumber(-1, 1), 0, rng:NextNumber(-1, 1))
+			local mid = (origin + target) / 2 + Vector3.new(0, 4, 0) + spread * 2
+			local duration = rng:NextNumber(0.35, 0.5)
+			local start = os.clock()
+			local spin = rng:NextNumber(4, 10)
+			local connection
+			connection = RunService.RenderStepped:Connect(function()
+				local t = math.min(1, (os.clock() - start) / duration)
+				-- Quadratic Bezier arc
+				local a = origin:Lerp(mid, t)
+				local b = mid:Lerp(target + spread * 0.4, t)
+				piece.CFrame = CFrame.new(a:Lerp(b, t)) * CFrame.Angles(t * spin, t * spin * 0.7, 0)
+				if t >= 1 then
+					connection:Disconnect()
+					piece:Destroy()
+				end
+			end)
+		end)
+	end
+	task.delay(0.45, function()
+		if lowVFX then
+			return
+		end
+		emitterAttachment.WorldCFrame = CFrame.new(target)
+		coins:Emit(14)
+	end)
 end
 
 -- Fireworks bursting above the cleaned object

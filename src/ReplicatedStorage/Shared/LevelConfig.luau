@@ -32,8 +32,30 @@ local LevelConfig = {}
 
 LevelConfig.Levels = {
 	{
-		LevelId = "Fountain",
+		LevelId = "Pile",
 		Order = 1,
+		Name = "Sticker Pile",
+		Description = "Someone dumped a mountain of stickers in a backyard. Bag them all!",
+		Size = "Small",
+		ObjectModel = "Pile",
+		BaseStickerCount = 4000,
+		StickerCounts = { Easy = 3000, Normal = 4000, Hard = 5500, Extreme = 7000 },
+		ModelScale = 1.0,
+		DifficultyMultiplier = 1,
+		BaseReward = 700,
+		StickerReward = 2,
+		BaseXP = 100,
+		RequiredLevel = 1,
+		RecommendedPlayers = { 1, 2 },
+		UnlockCost = 0,
+		Stars = 1,
+		ThemeColor = Color3.fromRGB(255, 140, 190),
+		CameraMaxZoom = 60,
+		Zones = { "Pile" },
+	},
+	{
+		LevelId = "Fountain",
+		Order = 2,
 		Name = "City Fountain",
 		Description = "A small city fountain someone covered in stickers overnight.",
 		Size = "Small",
@@ -55,7 +77,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "Car",
-		Order = 2,
+		Order = 3,
 		Name = "Sports Car",
 		Description = "A huge sports car - body, wheels, glass, hood, roof, bumpers and doors.",
 		Size = "Medium",
@@ -77,7 +99,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "Statue",
-		Order = 3,
+		Order = 4,
 		Name = "Grand Statue",
 		Description = "A giant hero statue on a pedestal. Stickers cover every inch.",
 		Size = "Large",
@@ -99,7 +121,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "House",
-		Order = 4,
+		Order = 5,
 		Name = "Cozy House",
 		Description = "Walls, windows, doors, roof, garage, balcony and fence.",
 		Size = "Large",
@@ -121,7 +143,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "Mansion",
-		Order = 5,
+		Order = 6,
 		Name = "Mega Mansion",
 		Description = "A huge mansion with columns, wings and a pool. Bring friends!",
 		Size = "Huge",
@@ -143,7 +165,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "Airplane",
-		Order = 6,
+		Order = 7,
 		Name = "Jumbo Airplane",
 		Description = "A gigantic airliner: wings, fuselage, tail, engines, cockpit and landing gear.",
 		Size = "Huge",
@@ -165,7 +187,7 @@ LevelConfig.Levels = {
 	},
 	{
 		LevelId = "Palace",
-		Order = 7,
+		Order = 8,
 		Name = "Royal Palace",
 		Description = "An enormous palace with towers and golden domes. The ultimate challenge.",
 		Size = "Colossal",

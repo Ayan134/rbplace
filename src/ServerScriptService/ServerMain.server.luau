@@ -12,6 +12,7 @@ local order = {
 	"EconomyService",
 	"UpgradeService",
 	"ToolService",
+	"ShopService",
 	"StickerService",
 	"LevelService",
 	"PartyService",

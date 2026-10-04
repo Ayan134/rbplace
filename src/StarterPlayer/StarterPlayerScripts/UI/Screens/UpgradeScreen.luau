@@ -24,6 +24,7 @@ function UpgradeScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "UpgradeWindow",
+		Icon = "⬆️",
 		Title = "Upgrades",
 		Color = Theme.Colors.Orange,
 		Size = UDim2.fromOffset(860, 600),
@@ -81,7 +82,7 @@ function UpgradeScreen:Refresh()
 			button.SetEnabled(false)
 		else
 			button = Components.Button({
-				Text = "● " .. Utility.FormatNumber(cost),
+				Text = Utility.FormatMoney(cost),
 				Color = Theme.Colors.Accent,
 				OnClick = function()
 					local result = Remotes.BuyUpgrade:InvokeServer(id)

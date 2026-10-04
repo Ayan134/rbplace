@@ -1,46 +1,48 @@
 --[[
 	Theme
-	Minimal style: flat dark panels, white text, one mint accent.
+	Cartoon simulator style: chunky rounded panels with thick dark outlines, bright
+	gradient buttons with a pressed "3D" lip, and FredokaOne text with a dark outline so
+	it reads on top of any background.
 ]]
 
 local Theme = {}
 
-local ACCENT = Color3.fromRGB(110, 222, 164)
-
 Theme.Colors = {
-	Background = Color3.fromRGB(12, 12, 16),
-	Panel = Color3.fromRGB(22, 22, 28),
-	PanelLight = Color3.fromRGB(40, 40, 48),
-	PanelDark = Color3.fromRGB(16, 16, 20),
-	Stroke = Color3.fromRGB(255, 255, 255),
-	Text = Color3.fromRGB(245, 245, 248),
-	TextDim = Color3.fromRGB(150, 150, 164),
-	TextDark = Color3.fromRGB(18, 18, 22),
+	Background = Color3.fromRGB(20, 22, 42),
+	Panel = Color3.fromRGB(44, 52, 96), -- window body
+	PanelLight = Color3.fromRGB(66, 78, 136), -- cards / inner boxes
+	PanelDark = Color3.fromRGB(30, 34, 66), -- wells, bar backgrounds
+	Outline = Color3.fromRGB(16, 18, 38), -- thick outline around everything
+	Stroke = Color3.fromRGB(16, 18, 38),
+	Text = Color3.fromRGB(255, 255, 255),
+	TextDim = Color3.fromRGB(196, 204, 240),
+	TextDark = Color3.fromRGB(16, 18, 38),
 
-	Accent = ACCENT,
-	-- Legacy names map onto the minimal palette
-	Pink = ACCENT,
-	Green = ACCENT,
-	Purple = Color3.fromRGB(160, 150, 255),
-	Blue = Color3.fromRGB(130, 176, 255),
-	Cyan = Color3.fromRGB(150, 214, 255),
-	Yellow = Color3.fromRGB(255, 214, 120),
-	Orange = Color3.fromRGB(255, 176, 120),
-	Red = Color3.fromRGB(240, 96, 110),
-	Grey = Color3.fromRGB(70, 70, 80),
+	Accent = Color3.fromRGB(78, 214, 96), -- green "go" buttons
+	Green = Color3.fromRGB(78, 214, 96),
+	Pink = Color3.fromRGB(255, 92, 168),
+	Purple = Color3.fromRGB(160, 102, 255),
+	Blue = Color3.fromRGB(56, 156, 255),
+	Cyan = Color3.fromRGB(70, 214, 255),
+	Yellow = Color3.fromRGB(255, 204, 46),
+	Orange = Color3.fromRGB(255, 140, 46),
+	Red = Color3.fromRGB(240, 66, 80),
+	Grey = Color3.fromRGB(120, 128, 156),
 
-	Coins = Color3.fromRGB(255, 214, 120),
-	Gems = Color3.fromRGB(150, 214, 255),
-	XP = Color3.fromRGB(170, 156, 255),
+	Money = Color3.fromRGB(112, 255, 120),
+	Coins = Color3.fromRGB(112, 255, 120),
+	Gems = Color3.fromRGB(90, 220, 255),
+	XP = Color3.fromRGB(190, 140, 255),
 }
 
 Theme.Fonts = {
-	Title = Enum.Font.GothamBold,
-	Bold = Enum.Font.GothamMedium,
-	Body = Enum.Font.Gotham,
+	Title = Enum.Font.FredokaOne,
+	Bold = Enum.Font.FredokaOne,
+	Body = Enum.Font.GothamBold,
 }
 
-Theme.Corner = 10
+Theme.Corner = 14
+Theme.OutlineThickness = 3
 
 function Theme.Darken(color: Color3, amount: number): Color3
 	return color:Lerp(Color3.new(0, 0, 0), amount)
@@ -50,10 +52,15 @@ function Theme.Lighten(color: Color3, amount: number): Color3
 	return color:Lerp(Color3.new(1, 1, 1), amount)
 end
 
+-- Outline color for a colored surface: a deep shade of the same hue
+function Theme.OutlineFor(color: Color3): Color3
+	return color:Lerp(Theme.Colors.Outline, 0.72)
+end
+
 -- Readable text color on top of `color`
-function Theme.TextOn(color: Color3): Color3
-	local luminance = 0.299 * color.R + 0.587 * color.G + 0.114 * color.B
-	return if luminance > 0.6 then Theme.Colors.TextDark else Theme.Colors.Text
+function Theme.TextOn(_color: Color3): Color3
+	-- Outlined white text reads on every button color in this style
+	return Theme.Colors.Text
 end
 
 return Theme

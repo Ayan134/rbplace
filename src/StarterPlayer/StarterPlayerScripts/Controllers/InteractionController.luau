@@ -2,10 +2,12 @@
 	InteractionController
 	Finds the sticker the player is aiming at and handles peel input.
 
-	  PC:      hover a sticker with the mouse -> "E - PEEL" prompt; hold E or hold the mouse
-	  Mobile:  nearest sticker in front of you is targeted automatically (or tap one);
-	           hold the big PEEL button
-	  Gamepad: nearest sticker in front of you; hold ButtonX / R2
+	  The game is first person, so the sticker under the crosshair (screen center) is the
+	  target on every device.
+	  PC:      aim with the crosshair -> "E - PEEL" prompt; hold E or the left mouse button
+	  Mobile:  aim (or tap a sticker); if nothing is under the crosshair the nearest sticker
+	           in front of you is used; hold the big PEEL button
+	  Gamepad: aim; nearest sticker in front of you as a fallback; hold ButtonX / R2
 
 	The actual peeling is delegated to PeelController.
 ]]
@@ -92,7 +94,8 @@ local function isPeelable(record, rootPosition: Vector3): boolean
 	return (record.Position - rootPosition).Magnitude <= Config.Peel.ClientReach
 end
 
-local function findHoverTarget(rootPosition: Vector3)
+-- Sticker under the crosshair (center of the screen)
+local function findCenterTarget(rootPosition: Vector3)
 	local camera = Workspace.CurrentCamera
 	if not camera then
 		return nil
@@ -100,8 +103,8 @@ local function findHoverTarget(rootPosition: Vector3)
 	if UserInputService:GetFocusedTextBox() then
 		return nil
 	end
-	local mouse = UserInputService:GetMouseLocation()
-	local ray = camera:ViewportPointToRay(mouse.X, mouse.Y)
+	local center = camera.ViewportSize / 2
+	local ray = camera:ViewportPointToRay(center.X, center.Y)
 	local result = Workspace:Raycast(ray.Origin, ray.Direction * 250, raycastParams)
 	if result then
 		local record = Controllers.StickerRenderer.GetRecordFromPart(result.Instance)
@@ -183,10 +186,11 @@ local function update()
 		local position = root.Position
 		if pinnedTarget and os.clock() < pinnedUntil and isPeelable(pinnedTarget, position) then
 			target = pinnedTarget
-		elseif InteractionController.InputMode == "KeyboardMouse" then
-			target = findHoverTarget(position)
 		else
-			target = findNearestTarget(position)
+			target = findCenterTarget(position)
+			if not target and InteractionController.InputMode ~= "KeyboardMouse" then
+				target = findNearestTarget(position)
+			end
 		end
 	end
 	if target ~= InteractionController.Target then
@@ -236,8 +240,8 @@ local function buildPrompt()
 	local playerGui = LOCAL_PLAYER:WaitForChild("PlayerGui")
 	prompt = Instance.new("BillboardGui")
 	prompt.Name = "PeelPrompt"
-	prompt.Size = UDim2.fromOffset(190, 74)
-	prompt.StudsOffsetWorldSpace = Vector3.new(0, 1.6, 0)
+	prompt.Size = UDim2.fromOffset(170, 66)
+	prompt.StudsOffsetWorldSpace = Vector3.new(0, 1.4, 0)
 	prompt.AlwaysOnTop = true
 	prompt.LightInfluence = 0
 	prompt.Enabled = false
@@ -246,26 +250,30 @@ local function buildPrompt()
 	local row = Instance.new("Frame")
 	row.Name = "Row"
 	row.Size = UDim2.new(1, 0, 0, 44)
-	row.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
-	row.BackgroundTransparency = 0.1
+	row.BackgroundColor3 = Color3.fromRGB(44, 52, 96)
+	row.BackgroundTransparency = 0.05
 	row.Parent = prompt
-	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
+	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 14)
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(255, 255, 255)
-	stroke.Transparency = 0.9
-	stroke.Thickness = 1
+	stroke.Color = Color3.fromRGB(16, 18, 38)
+	stroke.Thickness = 3
 	stroke.Parent = row
 
 	local key = Instance.new("TextLabel")
 	key.Name = "Key"
 	key.Size = UDim2.fromOffset(52, 34)
 	key.Position = UDim2.fromOffset(5, 5)
-	key.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	key.Font = Enum.Font.GothamBold
+	key.BackgroundColor3 = Color3.fromRGB(255, 204, 46)
+	key.Font = Enum.Font.FredokaOne
 	key.TextScaled = true
-	key.TextColor3 = Color3.fromRGB(18, 18, 22)
+	key.TextColor3 = Color3.fromRGB(16, 18, 38)
 	key.Parent = row
-	Instance.new("UICorner", key).CornerRadius = UDim.new(0, 8)
+	Instance.new("UICorner", key).CornerRadius = UDim.new(0, 10)
+	local keyStroke = Instance.new("UIStroke")
+	keyStroke.Color = Color3.fromRGB(90, 60, 10)
+	keyStroke.Thickness = 2.5
+	keyStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	keyStroke.Parent = key
 	local keyPadding = Instance.new("UIPadding")
 	keyPadding.PaddingTop = UDim.new(0, 4)
 	keyPadding.PaddingBottom = UDim.new(0, 4)
@@ -277,12 +285,16 @@ local function buildPrompt()
 	action.Size = UDim2.new(1, -68, 1, -10)
 	action.Position = UDim2.fromOffset(64, 5)
 	action.BackgroundTransparency = 1
-	action.Font = Enum.Font.GothamBold
+	action.Font = Enum.Font.FredokaOne
 	action.TextScaled = true
 	action.TextXAlignment = Enum.TextXAlignment.Left
 	action.TextColor3 = Color3.new(1, 1, 1)
 	action.Text = "PEEL"
 	action.Parent = row
+	local actionStroke = Instance.new("UIStroke")
+	actionStroke.Thickness = 2
+	actionStroke.Color = Color3.fromRGB(16, 18, 38)
+	actionStroke.Parent = action
 	promptAction = action
 
 	local infoLabel = Instance.new("TextLabel")
@@ -290,7 +302,7 @@ local function buildPrompt()
 	infoLabel.Size = UDim2.new(1, 0, 0, 24)
 	infoLabel.Position = UDim2.fromOffset(0, 48)
 	infoLabel.BackgroundTransparency = 1
-	infoLabel.Font = Enum.Font.GothamBold
+	infoLabel.Font = Enum.Font.FredokaOne
 	infoLabel.TextScaled = true
 	infoLabel.TextColor3 = Color3.new(1, 1, 1)
 	infoLabel.Parent = prompt

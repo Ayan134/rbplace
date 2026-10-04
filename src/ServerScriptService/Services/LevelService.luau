@@ -29,6 +29,7 @@ local Utility = require(Shared.Utility)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local Systems = script.Parent.Parent.Systems
+local AssetLoader = require(Systems.AssetLoader)
 local Decor = require(Systems.Decor)
 local LobbyBuilder = require(Systems.LobbyBuilder)
 local Notifier = require(Systems.Notifier)
@@ -140,7 +141,7 @@ end
 local function lobbySpawnCFrame(): CFrame
 	local spawn = lobbyModel:FindFirstChild("SpawnLocation", true)
 	if spawn and spawn:IsA("BasePart") then
-		return spawn.CFrame * CFrame.Angles(0, math.pi, 0)
+		return spawn.CFrame -- faces into the yard, like a fresh spawn
 	end
 	return CFrame.new(0, 3, 60)
 end
@@ -274,7 +275,7 @@ local function onRewardRequested(session, player: Player?, sticker)
 		return nil
 	end
 	if session.Kind == "Showcase" then
-		return EconomyService.AwardSticker(player, sticker, { Practice = true })
+		return EconomyService.AwardSticker(player, sticker, { Practice = true, LevelInfo = LevelConfig.Get(Config.Lobby.ShowcaseLevel) })
 	end
 	local match = matchBySession[session.Id]
 	if not match or match.State ~= "Playing" then
@@ -465,7 +466,8 @@ function endMatch(match)
 	if match.TerrainFilled then
 		local groundSize = Config.Arena.GroundSize
 		pcall(function()
-			Workspace.Terrain:FillBlock(CFrame.new(match.Origin - Vector3.new(0, 4, 0)), Vector3.new(groundSize + 8, 16, groundSize + 8), Enum.Material.Air)
+			-- Ground, water beds, hills and mountains all go
+			Workspace.Terrain:FillBlock(CFrame.new(match.Origin + Vector3.new(0, 40, 0)), Vector3.new(groundSize + 8, 108, groundSize + 8), Enum.Material.Air)
 		end)
 	end
 	slots[match.Slot] = nil
@@ -668,7 +670,7 @@ function LevelService.UnlockLevel(player: Player, levelId: any)
 		return { Success = false, Message = string.format("Requires player level %d", level.RequiredLevel) }
 	end
 	if not EconomyService.TrySpend(player, "Coins", level.UnlockCost) then
-		return { Success = false, Message = "Not enough Coins" }
+		return { Success = false, Message = "Not enough money" }
 	end
 	PlayerDataService.Update(player, function(d)
 		d.UnlockedLevels[levelId] = true
@@ -704,6 +706,11 @@ local function setupShowcase()
 		end
 	end
 	local position = if anchor and anchor:IsA("BasePart") then anchor.Position else Vector3.new(0, 0.35, 0)
+	if Config.Lobby.ShowcaseScale and Config.Lobby.ShowcaseScale ~= 1 then
+		pcall(function()
+			model:ScaleTo(model:GetScale() * Config.Lobby.ShowcaseScale)
+		end)
+	end
 	model:PivotTo(CFrame.new(position))
 	model.Parent = lobbyModel
 
@@ -794,6 +801,15 @@ function LevelService.Init()
 	publishPreviews()
 	lobbyModel = LobbyBuilder.Build()
 	LobbyBuilder.Decorate(lobbyModel)
+
+	-- Swap procedural scenery for Creator Store models in the background
+	task.spawn(function()
+		AssetLoader.LoadAll()
+		local replaced = AssetLoader.ApplyTo(levelsFolder) + AssetLoader.ApplyTo(lobbyModel)
+		if replaced > 0 then
+			print(string.format("[LevelService] Placed %d Store models", replaced))
+		end
+	end)
 
 	StickerService.RewardHandler = onRewardRequested
 

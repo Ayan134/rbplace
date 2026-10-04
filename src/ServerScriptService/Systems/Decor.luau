@@ -82,6 +82,10 @@ function Decor.Tree(parent: Instance, position: Vector3, scale: number?, style: 
 	local kind = style or "Round"
 	local model = Instance.new("Model")
 	model.Name = "Tree"
+	if kind == "Pine" or kind == "Round" then
+		-- A Store tree can take its place at runtime (AssetLoader)
+		model:SetAttribute("AssetKind", "Tree." .. kind)
+	end
 	model.Parent = parent
 	if kind == "Pine" then
 		local size, cf = vcyl(position + Vector3.new(0, 3 * s, 0), 6 * s, 1.4 * s)
@@ -143,18 +147,22 @@ end
 
 function Decor.Bush(parent: Instance, position: Vector3, size: number?, color: Color3?)
 	local s = size or 4
-	P(parent, { Name = "Bush", Size = Vector3.new(s, s * 0.8, s), CFrame = CFrame.new(position + Vector3.new(0, s * 0.3, 0)), Shape = Enum.PartType.Ball, Color = color or GREENS[3], Material = Enum.Material.Grass })
+	local bush = P(parent, { Name = "Bush", Size = Vector3.new(s, s * 0.8, s), CFrame = CFrame.new(position + Vector3.new(0, s * 0.3, 0)), Shape = Enum.PartType.Ball, Color = color or GREENS[3], Material = Enum.Material.Grass })
+	bush:SetAttribute("AssetKind", "Bush")
+	return bush
 end
 
 function Decor.Rock(parent: Instance, position: Vector3, size: number, rng: Random?)
 	local r = rng or Random.new()
-	P(parent, {
+	local rock = P(parent, {
 		Name = "Rock",
 		Size = Vector3.new(size, size * 0.6, size * 0.8),
 		CFrame = CFrame.new(position + Vector3.new(0, size * 0.2, 0)) * CFrame.Angles(r:NextNumber(-0.3, 0.3), r:NextNumber(0, 6.28), r:NextNumber(-0.3, 0.3)),
 		Color = Color3.fromRGB(150, 150, 156),
 		Material = Enum.Material.Slate,
 	})
+	rock:SetAttribute("AssetKind", "Rock")
+	return rock
 end
 
 function Decor.FlowerBed(parent: Instance, position: Vector3, radius: number, rng: Random?)
@@ -285,6 +293,152 @@ function Decor.AmbientMotes(parent: Instance, center: Vector3, radius: number, s
 	return emitterPart
 end
 
+function Decor.Hill(parent: Instance, position: Vector3, radius: number, color: Color3?)
+	local hill = P(parent, {
+		Name = "Hill",
+		Size = Vector3.one * radius * 2,
+		CFrame = CFrame.new(position - Vector3.new(0, radius * 0.45, 0)),
+		Shape = Enum.PartType.Ball,
+		Color = color or Color3.fromRGB(96, 168, 86),
+		Material = Enum.Material.Grass,
+		CanCollide = false,
+	})
+	hill:SetAttribute("TerrainMaterial", "Grass")
+	return hill
+end
+
+-- Rocky mountain: a cluster of overlapping rock balls (real terrain at runtime)
+function Decor.Mountain(parent: Instance, position: Vector3, size: number, rng: Random?)
+	local r = rng or Random.new(7)
+	local folder = Instance.new("Folder")
+	folder.Name = "Mountain"
+	folder.Parent = parent
+	local function blob(offset: Vector3, radius: number, material: string)
+		local part = P(folder, {
+			Name = "Rock",
+			Size = Vector3.one * radius * 2,
+			CFrame = CFrame.new(position + offset),
+			Shape = Enum.PartType.Ball,
+			Color = if material == "Rock" then Color3.fromRGB(128, 126, 130) else Color3.fromRGB(96, 168, 86),
+			Material = if material == "Rock" then Enum.Material.Rock else Enum.Material.Grass,
+			CanCollide = false,
+		})
+		part:SetAttribute("TerrainMaterial", material)
+	end
+	blob(Vector3.new(0, -size * 0.25, 0), size, "Rock")
+	for _ = 1, 4 do
+		local angle = r:NextNumber(0, math.pi * 2)
+		local radius = size * r:NextNumber(0.45, 0.7)
+		blob(Vector3.new(math.cos(angle) * size * 0.7, -radius * 0.35, math.sin(angle) * size * 0.7), radius, "Rock")
+	end
+	-- Grassy foothills in front
+	for _ = 1, 3 do
+		local angle = r:NextNumber(0, math.pi * 2)
+		local radius = size * r:NextNumber(0.3, 0.45)
+		blob(Vector3.new(math.cos(angle) * size * 1.1, -radius * 0.5, math.sin(angle) * size * 1.1), radius, "Grass")
+	end
+	return folder
+end
+
+-- Dirt path / patch: replaces the top layer of grass with terrain ground at runtime
+function Decor.DirtPath(parent: Instance, cframe: CFrame, size: Vector2, material: string?)
+	local patch = P(parent, {
+		Name = "DirtPath",
+		Size = Vector3.new(size.X, 2, size.Y),
+		CFrame = cframe * CFrame.new(0, -0.9, 0),
+		Color = Color3.fromRGB(150, 108, 70),
+		Material = Enum.Material.Ground,
+		CanCollide = false,
+		CastShadow = false,
+	})
+	patch:SetAttribute("TerrainMaterial", material or "Ground")
+	return patch
+end
+
+-- Round dirt patch made of a terrain ball flattened into the ground
+function Decor.DirtCircle(parent: Instance, position: Vector3, radius: number, material: string?)
+	local patch = P(parent, {
+		Name = "DirtCircle",
+		Size = Vector3.new(2, radius * 2, radius * 2),
+		CFrame = CFrame.new(position - Vector3.new(0, 0.9, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Shape = Enum.PartType.Cylinder,
+		Color = Color3.fromRGB(150, 108, 70),
+		Material = Enum.Material.Ground,
+		CanCollide = false,
+		CastShadow = false,
+	})
+	patch:SetAttribute("TerrainMaterial", material or "Ground")
+	return patch
+end
+
+-- White picket fence from a to b (posts, two rails and pointed pickets)
+function Decor.PicketFence(parent: Instance, a: Vector3, b: Vector3, height: number?)
+	local h = height or 4
+	local model = Instance.new("Model")
+	model.Name = "PicketFence"
+	model.Parent = parent
+	local white = Color3.fromRGB(250, 250, 248)
+	local flatA, flatB = Vector3.new(a.X, 0, a.Z), Vector3.new(b.X, 0, b.Z)
+	local length = (flatB - flatA).Magnitude
+	if length < 0.5 then
+		return model
+	end
+	local frame = CFrame.lookAt(flatA, flatB)
+	for _, y in ipairs({ h * 0.3, h * 0.72 }) do
+		P(model, { Name = "Rail", Size = Vector3.new(0.25, 0.4, length), CFrame = frame * CFrame.new(0, y, -length / 2), Color = white, Material = Enum.Material.WoodPlanks })
+	end
+	local posts = math.max(1, math.floor(length / 8))
+	for i = 0, posts do
+		local z = -length * i / posts
+		P(model, { Name = "Post", Size = Vector3.new(0.6, h + 0.6, 0.6), CFrame = frame * CFrame.new(0, (h + 0.6) / 2, z), Color = white, Material = Enum.Material.WoodPlanks })
+		P(model, { Name = "PostCap", Size = Vector3.new(0.8, 0.25, 0.8), CFrame = frame * CFrame.new(0, h + 0.7, z), Color = white })
+	end
+	local pickets = math.floor(length / 1.6)
+	for i = 0, pickets - 1 do
+		local z = -(i + 0.5) * length / pickets
+		P(model, { Name = "Picket", Size = Vector3.new(0.18, h - 0.6, 0.8), CFrame = frame * CFrame.new(0.2, (h - 0.6) / 2, z), Color = white, Material = Enum.Material.WoodPlanks, CastShadow = false })
+		-- Pointed top: a square turned 45 degrees, half sunk into the picket
+		P(model, { Name = "PicketTip", Size = Vector3.new(0.18, 0.57, 0.57), CFrame = frame * CFrame.new(0.2, h - 0.6, z) * CFrame.Angles(math.rad(45), 0, 0), Color = white, CastShadow = false })
+	end
+	return model
+end
+
+-- Cartoon mushroom: white stem, round cap with spots. AssetKind lets a Store model replace it.
+function Decor.Mushroom(parent: Instance, position: Vector3, height: number, capColor: Color3?, rng: Random?)
+	local r = rng or Random.new(math.floor(position.X * 13 + position.Z * 7))
+	local model = Instance.new("Model")
+	model.Name = "Mushroom"
+	model:SetAttribute("AssetKind", if height > 6 then "Mushroom" else "SmallMushroom")
+	model.Parent = parent
+	local cap = capColor or Color3.fromRGB(230, 40, 50)
+	local stemHeight = height * 0.62
+	local stem, stemCF = vcyl(position + Vector3.new(0, stemHeight / 2, 0), stemHeight, height * 0.26)
+	P(model, { Name = "Stem", Size = stem, CFrame = stemCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(250, 244, 230) })
+	local skirt, skirtCF = vcyl(position + Vector3.new(0, stemHeight * 0.7, 0), height * 0.06, height * 0.36)
+	P(model, { Name = "Skirt", Size = skirt, CFrame = skirtCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(240, 232, 214) })
+	local capCenter = position + Vector3.new(0, stemHeight, 0)
+	P(model, { Name = "Cap", Size = Vector3.new(height * 0.95, height * 0.55, height * 0.95), CFrame = CFrame.new(capCenter + Vector3.new(0, height * 0.08, 0)), Shape = Enum.PartType.Ball, Color = cap })
+	P(model, { Name = "CapUnder", Size = Vector3.new(height * 0.08, height * 0.85, height * 0.85), CFrame = CFrame.new(capCenter - Vector3.new(0, height * 0.02, 0)) * CFrame.Angles(0, 0, math.rad(90)), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(240, 220, 200) })
+	-- White spots on the cap
+	local spots = 7
+	for i = 1, spots do
+		local angle = (i / spots) * math.pi * 2 + r:NextNumber(-0.3, 0.3)
+		local elevation = r:NextNumber(0.35, 1.15)
+		local dir = Vector3.new(math.cos(angle) * math.cos(elevation), math.sin(elevation), math.sin(angle) * math.cos(elevation))
+		local surface = capCenter + Vector3.new(0, height * 0.08, 0) + Vector3.new(dir.X * height * 0.46, dir.Y * height * 0.27, dir.Z * height * 0.46)
+		P(model, { Name = "Spot", Size = Vector3.new(height * 0.05, height * 0.17, height * 0.17), CFrame = CFrame.lookAt(surface, surface + dir) * CFrame.Angles(0, math.rad(90), 0), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(255, 255, 255), CastShadow = false })
+	end
+	return model
+end
+
+function Decor.MushroomCluster(parent: Instance, position: Vector3, count: number, rng: Random?, capColor: Color3?)
+	local r = rng or Random.new(3)
+	for _ = 1, count do
+		local offset = Vector3.new(r:NextNumber(-2.4, 2.4), 0, r:NextNumber(-2.4, 2.4))
+		Decor.Mushroom(parent, position + offset, r:NextNumber(1.2, 2.4), capColor, r)
+	end
+end
+
 -- Placeholder that becomes real terrain water at runtime
 function Decor.Water(parent: Instance, cframe: CFrame, size: Vector3)
 	local water = P(parent, {
@@ -315,7 +469,12 @@ function Decor.ApplyTerrain(root: Instance)
 						terrain:FillBlock(descendant.CFrame * CFrame.new(0, -size.Y / 2 - 1.5, 0), Vector3.new(size.X + 4, 3, size.Z + 4), Enum.Material.Sand)
 						terrain:FillBlock(descendant.CFrame * CFrame.new(0, size.Y / 2 - 0.5, 0), Vector3.new(size.X + 3, 1, size.Z + 3), Enum.Material.Sand)
 					end
-					terrain:FillBlock(descendant.CFrame, descendant.Size, (Enum.Material :: any)[materialName])
+					local material = (Enum.Material :: any)[materialName]
+					if descendant:IsA("Part") and descendant.Shape == Enum.PartType.Ball then
+						terrain:FillBall(descendant.Position, math.min(descendant.Size.X, descendant.Size.Y, descendant.Size.Z) / 2, material)
+					else
+						terrain:FillBlock(descendant.CFrame, descendant.Size, material)
+					end
 				end)
 				if ok then
 					descendant.Transparency = 1
@@ -469,11 +628,19 @@ end
 
 function Decor.Bench(parent: Instance, cframe: CFrame)
 	local wood = Color3.fromRGB(168, 112, 66)
+	local bench = Instance.new("Model")
+	bench.Name = "Bench"
+	bench:SetAttribute("AssetKind", "Bench")
+	bench.Parent = parent
+	parent = bench
 	P(parent, { Name = "BenchSeat", Size = Vector3.new(6, 0.4, 2), CFrame = cframe * CFrame.new(0, 1.6, 0), Color = wood, Material = Enum.Material.WoodPlanks })
 	P(parent, { Name = "BenchBack", Size = Vector3.new(6, 1.6, 0.35), CFrame = cframe * CFrame.new(0, 2.6, 0.9) * CFrame.Angles(math.rad(-10), 0, 0), Color = wood, Material = Enum.Material.WoodPlanks })
 	for _, x in ipairs({ -2.5, 2.5 }) do
 		P(parent, { Name = "BenchLeg", Size = Vector3.new(0.35, 1.5, 1.8), CFrame = cframe * CFrame.new(x, 0.75, 0.1), Color = Color3.fromRGB(46, 48, 56), Material = Enum.Material.Metal })
 	end
+	-- Keep the bench's orientation so a replacement model lines up with it
+	bench.WorldPivot = cframe
+	return bench
 end
 
 function Decor.Planter(parent: Instance, cframe: CFrame, size: Vector3, rng: Random?)
@@ -542,13 +709,16 @@ end
 
 function Decor.Crate(parent: Instance, cframe: CFrame, size: number?)
 	local s = size or 3
-	P(parent, { Name = "Crate", Size = Vector3.one * s, CFrame = cframe * CFrame.new(0, s / 2, 0), Color = Color3.fromRGB(176, 128, 76), Material = Enum.Material.WoodPlanks })
+	local crate = P(parent, { Name = "Crate", Size = Vector3.one * s, CFrame = cframe * CFrame.new(0, s / 2, 0), Color = Color3.fromRGB(176, 128, 76), Material = Enum.Material.WoodPlanks })
+	crate:SetAttribute("AssetKind", "Crate")
+	return crate
 end
 
 -- Low-poly car
 function Decor.Car(parent: Instance, cframe: CFrame, color: Color3)
 	local model = Instance.new("Model")
 	model.Name = "ParkedCar"
+	model:SetAttribute("AssetKind", "Car")
 	model.Parent = parent
 	P(model, { Name = "Body", Size = Vector3.new(5, 1.6, 10), CFrame = cframe * CFrame.new(0, 1.6, 0), Color = color, Reflectance = 0.05 })
 	P(model, { Name = "Cabin", Size = Vector3.new(4.4, 1.5, 5), CFrame = cframe * CFrame.new(0, 3.1, 0.6), Color = Color3.fromRGB(60, 80, 110), Material = Enum.Material.Glass, Transparency = 0.15 })
@@ -562,6 +732,7 @@ function Decor.Car(parent: Instance, cframe: CFrame, color: Color3)
 		P(model, { Name = "Headlight", Size = Vector3.new(1, 0.4, 0.1), CFrame = cframe * CFrame.new(x, 1.8, -5), Color = Color3.fromRGB(255, 250, 220), Material = Enum.Material.Neon, CanCollide = false })
 		P(model, { Name = "Taillight", Size = Vector3.new(1, 0.4, 0.1), CFrame = cframe * CFrame.new(x, 1.8, 5), Color = Color3.fromRGB(255, 50, 50), Material = Enum.Material.Neon, CanCollide = false })
 	end
+	model.WorldPivot = cframe
 	return model
 end
 
@@ -720,7 +891,7 @@ function Decor.FoodTruck(parent: Instance, cframe: CFrame, color: Color3)
 	label.BackgroundTransparency = 1
 	label.Text = "🍔 🍟 🥤"
 	label.TextScaled = true
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.FredokaOne
 	label.Parent = gui
 	light(sign, 16, 1.2, Color3.fromRGB(255, 220, 170))
 	return model
@@ -778,7 +949,7 @@ function Decor.Stall(parent: Instance, cframe: CFrame, color: Color3, text: stri
 	label.BackgroundTransparency = 1
 	label.Text = text
 	label.TextScaled = true
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.FredokaOne
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Parent = gui
 	return model
@@ -809,6 +980,146 @@ function Decor.TennisCourt(parent: Instance, cframe: CFrame)
 	return model
 end
 
+-- Metal trash can where players empty their sticker bags. The body carries the SellPoint
+-- attribute (walk up to sell) and a prompt (F) as a fallback.
+function Decor.TrashCan(parent: Instance, position: Vector3, scale: number?)
+	local s = scale or 1
+	local model = Instance.new("Model")
+	model.Name = "TrashCan"
+	model.Parent = parent
+	local metal = Color3.fromRGB(150, 158, 170)
+	local dark = Color3.fromRGB(112, 120, 132)
+	local body, bodyCF = vcyl(position + Vector3.new(0, 2.7 * s, 0), 5 * s, 4.2 * s)
+	local bodyPart = P(model, { Name = "Body", Size = body, CFrame = bodyCF, Shape = Enum.PartType.Cylinder, Color = metal, Material = Enum.Material.Metal, Reflectance = 0.05 })
+	local base, baseCF = vcyl(position + Vector3.new(0, 0.2 * s, 0), 0.4 * s, 3.8 * s)
+	P(model, { Name = "Base", Size = base, CFrame = baseCF, Shape = Enum.PartType.Cylinder, Color = dark, Material = Enum.Material.Metal })
+	for _, y in ipairs({ 1.2, 2.7, 4.2 }) do
+		local rib, ribCF = vcyl(position + Vector3.new(0, y * s, 0), 0.3 * s, 4.45 * s)
+		P(model, { Name = "Rib", Size = rib, CFrame = ribCF, Shape = Enum.PartType.Cylinder, Color = dark, Material = Enum.Material.Metal })
+	end
+	local lid, lidCF = vcyl(position + Vector3.new(0, 5.45 * s, 0), 0.5 * s, 4.8 * s)
+	P(model, { Name = "Lid", Size = lid, CFrame = lidCF, Shape = Enum.PartType.Cylinder, Color = metal, Material = Enum.Material.Metal, Reflectance = 0.05 })
+	local dome, domeCF = vcyl(position + Vector3.new(0, 5.85 * s, 0), 0.35 * s, 3.6 * s)
+	P(model, { Name = "LidTop", Size = dome, CFrame = domeCF, Shape = Enum.PartType.Cylinder, Color = dark, Material = Enum.Material.Metal })
+	P(model, { Name = "Handle", Size = Vector3.new(1.8 * s, 0.35 * s, 0.4 * s), CFrame = CFrame.new(position + Vector3.new(0, 6.3 * s, 0)), Color = dark, Material = Enum.Material.Metal })
+	for _, x in ipairs({ -0.8, 0.8 }) do
+		P(model, { Name = "HandlePost", Size = Vector3.new(0.3 * s, 0.5 * s, 0.3 * s), CFrame = CFrame.new(position + Vector3.new(x * s, 6.05 * s, 0)), Color = dark, Material = Enum.Material.Metal })
+	end
+	-- Green sell zone painted on the ground
+	local ring, ringCF = vcyl(position + Vector3.new(0, 0.07, 0), 0.06, 11 * s)
+	P(model, { Name = "SellZone", Size = ring, CFrame = ringCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(90, 220, 120), Material = Enum.Material.Neon, Transparency = 0.55, CanCollide = false, CastShadow = false })
+	local inner, innerCF = vcyl(position + Vector3.new(0, 0.08, 0), 0.06, 10 * s)
+	P(model, { Name = "SellZoneInner", Size = inner, CFrame = innerCF, Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(60, 150, 80), Material = Enum.Material.SmoothPlastic, Transparency = 0.6, CanCollide = false, CastShadow = false })
+
+	bodyPart:SetAttribute("SellPoint", true)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "SellPrompt"
+	prompt.ActionText = "Throw away stickers"
+	prompt.ObjectText = "Trash Can"
+	prompt.KeyboardKeyCode = Enum.KeyCode.F
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt:SetAttribute("Action", "Sell")
+	prompt.Parent = bodyPart
+
+	local anchor = P(model, { Name = "SignAnchor", Size = Vector3.new(0.2, 0.2, 0.2), CFrame = CFrame.new(position + Vector3.new(0, 8.4 * s, 0)), Transparency = 1, CanCollide = false, CastShadow = false })
+	anchor.CanQuery = false
+	local sign = Instance.new("BillboardGui")
+	sign.Name = "SellSign"
+	sign.Size = UDim2.fromScale(6 * s, 2 * s)
+	sign.LightInfluence = 0
+	sign.MaxDistance = 140
+	sign.Parent = anchor
+	local label = Instance.new("TextLabel")
+	label.Name = "Label"
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.Text = "🗑️ SELL"
+	label.TextScaled = true
+	label.TextColor3 = Color3.fromRGB(110, 255, 130)
+	label.Parent = sign
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 3
+	stroke.Color = Color3.fromRGB(20, 60, 30)
+	stroke.Parent = label
+	return model
+end
+
+-- Little shop stall in a level: its prompt opens the shop window on the client
+function Decor.ShopStall(parent: Instance, cframe: CFrame)
+	local stall = Decor.Stall(parent, cframe, Color3.fromRGB(70, 170, 255), "🛒 SHOP")
+	local counter = stall:FindFirstChild("StallCounter")
+	if counter then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "ShopPrompt"
+		prompt.ActionText = "Open shop"
+		prompt.ObjectText = "Shop"
+		prompt.KeyboardKeyCode = Enum.KeyCode.F
+		prompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+		prompt.HoldDuration = 0
+		prompt.MaxActivationDistance = 10
+		prompt.RequiresLineOfSight = false
+		prompt:SetAttribute("OpenUI", "Shop")
+		prompt.Parent = counter
+	end
+	return stall
+end
+
+-- Wooden notice board with lines of text; front faces local -Z
+function Decor.NoticeBoard(parent: Instance, cframe: CFrame, title: string, lines: { string })
+	local model = Instance.new("Model")
+	model.Name = "NoticeBoard"
+	model.Parent = parent
+	local wood = Color3.fromRGB(150, 100, 60)
+	for _, x in ipairs({ -4.6, 4.6 }) do
+		P(model, { Name = "Leg", Size = Vector3.new(0.6, 8, 0.6), CFrame = cframe * CFrame.new(x, 4, 0), Color = wood, Material = Enum.Material.Wood })
+	end
+	local board = P(model, { Name = "Board", Size = Vector3.new(9, 5.6, 0.4), CFrame = cframe * CFrame.new(0, 5, 0), Color = Color3.fromRGB(196, 150, 100), Material = Enum.Material.WoodPlanks })
+	P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(10.4, 0.8, 0.8), CFrame = cframe * CFrame.new(0, 8.2, -0.4), Color = Color3.fromRGB(120, 70, 40), Material = Enum.Material.Wood })
+	P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(10.4, 0.8, 0.8), CFrame = cframe * CFrame.new(0, 8.2, 0.4) * CFrame.Angles(0, math.pi, 0), Color = Color3.fromRGB(120, 70, 40), Material = Enum.Material.Wood })
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 40
+	gui.LightInfluence = 0.3
+	gui.Parent = board
+	local paper = Instance.new("Frame")
+	paper.Size = UDim2.new(1, -24, 1, -24)
+	paper.Position = UDim2.fromOffset(12, 12)
+	paper.BackgroundColor3 = Color3.fromRGB(250, 244, 226)
+	paper.Parent = gui
+	Instance.new("UICorner", paper).CornerRadius = UDim.new(0, 10)
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 6)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = paper
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop = UDim.new(0, 10)
+	padding.PaddingLeft = UDim.new(0, 16)
+	padding.PaddingRight = UDim.new(0, 16)
+	padding.Parent = paper
+	local function line(text: string, size: number, color: Color3, order: number)
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, 0, 0, size)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.FredokaOne
+		label.Text = text
+		label.TextScaled = true
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextColor3 = color
+		label.LayoutOrder = order
+		label.Parent = paper
+	end
+	line(title, 44, Color3.fromRGB(200, 60, 60), 0)
+	for i, text in ipairs(lines) do
+		line(text, 30, Color3.fromRGB(60, 44, 30), i)
+	end
+	return model
+end
+
 -- Neon-lit sign board
 function Decor.NeonSign(parent: Instance, cframe: CFrame, text: string, color: Color3, width: number?)
 	local w = width or 16
@@ -823,7 +1134,7 @@ function Decor.NeonSign(parent: Instance, cframe: CFrame, text: string, color: C
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.FredokaOne
 	label.Text = text
 	label.TextScaled = true
 	label.TextColor3 = color

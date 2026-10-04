@@ -35,12 +35,14 @@ function PartyScreen.new(gui: ScreenGui, ctx)
 	local self = setmetatable({}, PartyScreen)
 	self.Gui = gui
 	self.Ctx = ctx
-	self.Settings = { LevelId = "Fountain", Difficulty = "Easy", MaxSize = 4, FriendsOnly = false }
+	self.Settings = { LevelId = "Pile", Difficulty = "Easy", MaxSize = 4, FriendsOnly = false }
 	self.Editing = false
 
 	-- Setup panel
 	self.Window = Components.Window(gui, {
 		Name = "RoomSetup",
+		Icon = "🎮",
+		Color = Theme.Colors.Green,
 		Title = "Create room",
 		Size = UDim2.fromOffset(560, 560),
 		OnClose = function()

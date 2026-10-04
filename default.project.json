@@ -77,6 +77,12 @@
         },
         "ConfigureRoom": {
           "$className": "RemoteFunction"
+        },
+        "BuyBag": {
+          "$className": "RemoteFunction"
+        },
+        "EquipBag": {
+          "$className": "RemoteFunction"
         }
       }
     },
@@ -93,10 +99,14 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
-        "CameraMaxZoomDistance": 60,
-        "CharacterWalkSpeed": 18,
+        "CameraMaxZoomDistance": 0.5,
+        "CharacterWalkSpeed": 20,
         "CharacterUseJumpPower": false,
-        "CharacterJumpHeight": 8.5
+        "CharacterJumpHeight": 8.5,
+        "CameraMode": {
+          "Enum": 1
+        },
+        "CameraMinZoomDistance": 0.5
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
@@ -216,7 +226,7 @@
       "Terrain": {
         "$className": "Terrain",
         "$properties": {
-          "Decoration": true,
+          "Decoration": false,
           "WaterColor": [
             0.3,
             0.62,

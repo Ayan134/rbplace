@@ -3,13 +3,16 @@
 	Character feedback using only Roblox's own default animations (no uploads needed):
 	  * idle / walk / run / jump come from the default Animate script
 	  * peeling: the default tool "slash" swing is replayed while stickers are being
-	    peeled (character animations replicate to everyone) and the character turns to
-	    face the sticker
+	    peeled (character animations replicate, so other players see it); `Swung` fires
+	    so the first-person viewmodel can chop in sync
 	  * celebration: default "cheer" emote + jump on level complete
 ]]
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+
+local Signal = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Signal"))
 
 local LOCAL_PLAYER = Players.LocalPlayer
 
@@ -21,6 +24,8 @@ local FALLBACK_SLASH = {
 local SWING_INTERVAL = 0.55
 
 local AnimationController = {}
+
+AnimationController.Swung = Signal.new() -- () a peel swing just started
 
 local peelTarget: Vector3? = nil
 local slashTrack: AnimationTrack? = nil
@@ -96,17 +101,6 @@ local function update()
 	end
 	local now = os.clock()
 
-	-- Face the sticker while standing still and peeling
-	if peelTarget and humanoid.MoveDirection.Magnitude < 0.1 then
-		humanoid.AutoRotate = false
-		local flatTarget = Vector3.new(peelTarget.X, root.Position.Y, peelTarget.Z)
-		if (flatTarget - root.Position).Magnitude > 0.5 then
-			root.CFrame = root.CFrame:Lerp(CFrame.lookAt(root.Position, flatTarget), 0.18)
-		end
-	else
-		humanoid.AutoRotate = true
-	end
-
 	-- Arm swing while peeling
 	if peelTarget and (pendingPulse or now - lastSwing > SWING_INTERVAL) then
 		pendingPulse = false
@@ -117,6 +111,7 @@ local function update()
 		if slashTrack then
 			slashTrack:Play(0.1, 1, 1.15)
 		end
+		AnimationController.Swung:Fire()
 	elseif not peelTarget then
 		pendingPulse = false
 	end

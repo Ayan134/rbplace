@@ -100,7 +100,7 @@ function ToolService.Buy(player: Player, toolId: any)
 		return { Success = false, Message = string.format("Requires player level %d", info.RequiredLevel) }
 	end
 	if not EconomyService.TrySpend(player, info.Currency, info.Price) then
-		return { Success = false, Message = "Not enough " .. info.Currency }
+		return { Success = false, Message = "Not enough " .. (if info.Currency == "Gems" then "Gems" else "money") }
 	end
 	PlayerDataService.Update(player, function(d)
 		d.UnlockedTools[toolId] = true

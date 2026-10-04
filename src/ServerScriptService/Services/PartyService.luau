@@ -122,7 +122,7 @@ local function defaultSettings(player: Player)
 	if saved and canPlayLevel(player, saved.LevelId, saved.Difficulty) then
 		return table.clone(saved)
 	end
-	return { LevelId = "Fountain", Difficulty = "Easy", MaxSize = Config.Party.MaxPartySize, FriendsOnly = false }
+	return { LevelId = "Pile", Difficulty = "Easy", MaxSize = Config.Party.MaxPartySize, FriendsOnly = false }
 end
 
 ------------------------------------------------------------------------
@@ -203,7 +203,7 @@ local function updatePadVisual(pad: Pad)
 			title.Text = "ROOM " .. pad.Index
 		end
 		if status then
-			status.Text = "Step in to create"
+			status.Text = "Step in to create a room"
 		end
 		return
 	end

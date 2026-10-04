@@ -5,6 +5,7 @@
 	for predicting peel duration so the animation feels instant.
 ]]
 
+local BagConfig = require(script.Parent.BagConfig)
 local Config = require(script.Parent.Config)
 local ToolConfig = require(script.Parent.ToolConfig)
 local UpgradeConfig = require(script.Parent.UpgradeConfig)
@@ -19,6 +20,8 @@ export type Stats = {
 	RewardMultiplier: number,
 	ToolTier: number,
 	ToolId: string,
+	BagCapacity: number, -- stickers the bag holds before it must be emptied
+	BagId: string,
 }
 
 local function upgradeLevel(data, id: string): number
@@ -27,6 +30,7 @@ end
 
 function PlayerStats.Compute(data): Stats
 	local tool = ToolConfig.Get(data and data.EquippedTool or "Hand") or ToolConfig.Tools.Hand
+	local bag = BagConfig.Get(data and data.EquippedBag) or BagConfig.Bags.Pocket
 
 	local power = UpgradeConfig.GetValue("PeelPower", upgradeLevel(data, "PeelPower"))
 	local speed = UpgradeConfig.GetValue("PeelSpeed", upgradeLevel(data, "PeelSpeed"))
@@ -42,12 +46,19 @@ function PlayerStats.Compute(data): Stats
 		RewardMultiplier = 1 + reward,
 		ToolTier = tool.Tier,
 		ToolId = tool.Id,
+		BagCapacity = bag.Capacity,
+		BagId = bag.Id,
 	}
 end
 
 -- Full duration (seconds) to peel a sticker with `health` HP from 0%.
 function PlayerStats.GetPeelDuration(stats: Stats, health: number): number
 	return math.max(Config.Peel.MinDuration, health / stats.PeelRate * stats.DurationFactor)
+end
+
+-- Stickers currently carried (0 when the data has no bag yet)
+function PlayerStats.GetBagCount(data): number
+	return (data and data.Bag and data.Bag.Count) or 0
 end
 
 function PlayerStats.GetComboMultiplier(combo: number): number

@@ -77,10 +77,16 @@ local Config = {
 	},
 
 	Lobby = {
-		ShowcaseStickerCount = 700,
+		ShowcaseStickerCount = 500,
 		ShowcaseRegenerateAt = 0.7, -- regenerate when 70% peeled
 		GhostPeelInterval = 1.4, -- demo "ghost" peels a sticker every N seconds
-		ShowcaseLevel = "Fountain",
+		ShowcaseLevel = "Pile",
+		ShowcaseScale = 0.45, -- the practice pile is a small copy of the level's pile
+	},
+
+	Bag = {
+		PracticeValue = 0.5, -- lobby showcase stickers sell for half
+		SellRadius = 7, -- walking this close to a trash can empties the bag
 	},
 
 	Rewards = {

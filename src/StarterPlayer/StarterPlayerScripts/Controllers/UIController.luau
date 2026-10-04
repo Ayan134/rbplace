@@ -110,8 +110,11 @@ function UIController.CloseWindows(except: string?)
 	end
 end
 
+-- Windows that can also be opened inside a level (shop stalls next to the spawn)
+local IN_GAME_WINDOWS = { Shop = true, Inventory = true, Settings = true, Upgrades = true }
+
 function UIController.OpenWindow(name: string)
-	if UIController.Mode ~= "Lobby" then
+	if UIController.Mode ~= "Lobby" and not (UIController.Mode == "Game" and IN_GAME_WINDOWS[name]) then
 		return
 	end
 	if name == "Party" then
@@ -128,6 +131,9 @@ end
 
 function UIController.ToggleWindow(name: string)
 	if name == "Party" then
+		if UIController.Mode ~= "Lobby" then
+			return
+		end
 		screens.Party:GoToPads()
 		return
 	end
@@ -153,6 +159,18 @@ function UIController.OpenPartyWithLevel(levelId: string, difficultyId: string)
 	end
 end
 
+-- Full-bag reminder on the HUD (BagController)
+function UIController.SetBagHint(visible: boolean)
+	if screens.HUD then
+		screens.HUD:SetBagHint(visible)
+	end
+end
+
+-- First person: the cursor must be free while a window or the results are on screen
+function UIController.IsCursorNeeded(): boolean
+	return Components.OpenWindowCount() > 0 or UIController.Mode == "Results"
+end
+
 function UIController.SetQuestsVisible(visible: boolean)
 	if screens.Lobby then
 		screens.Lobby:SetQuestsVisible(visible)
@@ -168,9 +186,13 @@ local function setMode(mode: string)
 		UIController.CloseWindows()
 		screens.Party.Window.Close()
 	end
-	for _, name in ipairs({ "Levels", "Inventory", "Upgrades", "Shop", "Settings", "Profile" }) do
-		windows[name].Gui.Enabled = lobby
+	if mode ~= "Game" and mode ~= "Lobby" then
+		UIController.CloseWindows()
 	end
+	for _, name in ipairs({ "Levels", "Inventory", "Upgrades", "Shop", "Settings", "Profile" }) do
+		windows[name].Gui.Enabled = lobby or (mode == "Game" and IN_GAME_WINDOWS[name] == true)
+	end
+	screens.HUD:SetVisible(lobby or mode == "Game")
 	Controllers.InteractionController.Enabled = mode == "Lobby" or mode == "Game"
 	if mode ~= "Game" and mode ~= "Lobby" then
 		Controllers.InteractionController.ReleaseAll()
@@ -190,6 +212,7 @@ local function onDataChanged(data)
 	if not data then
 		return
 	end
+	screens.HUD:Update(data)
 	screens.Lobby:Update(data)
 	screens.Gameplay:UpdateData(data)
 	for _, screen in pairs(windows) do
@@ -251,7 +274,7 @@ local function onEffect(effectName: string, payload)
 			local color = Rarity.Color(info.Rarity)
 			Controllers.SoundManager.Play("RareSticker")
 			Controllers.EffectsController.Flash(color, 0.25)
-			local subtitle = info.DisplayName .. "  •  +" .. Utility.FormatNumber(payload.Coins) .. " Coins"
+			local subtitle = info.DisplayName .. "  •  +" .. Utility.FormatMoney(payload.Coins)
 			if payload.Gems and payload.Gems > 0 then
 				subtitle ..= "  +" .. payload.Gems .. " gems"
 			end
@@ -280,6 +303,7 @@ function UIController.Start()
 	end
 
 	screens.Notification = load("NotificationScreen").new(getGui("NotificationUI"), ctx)
+	screens.HUD = load("HUDScreen").new(getGui("HUDUI"), ctx)
 	screens.Lobby = load("LobbyHUD").new(getGui("LobbyUI"), ctx)
 	screens.Party = load("PartyScreen").new(getGui("PartyUI"), ctx)
 	screens.Levels = load("LevelSelectScreen").new(getGui("LevelSelectUI"), ctx)
@@ -358,13 +382,22 @@ function UIController.Start()
 		end
 	end)
 
-	-- Escape-style close for windows (B on gamepad)
+	-- Keyboard shortcuts for the side menu, and B on gamepad closes windows
+	local shortcuts = {}
+	for _, entry in ipairs(require(ScreensFolder.LobbyHUD).Menu) do
+		shortcuts[Enum.KeyCode[entry.Key]] = entry.Id
+	end
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then
+		if processed or UserInputService:GetFocusedTextBox() then
 			return
 		end
 		if input.KeyCode == Enum.KeyCode.ButtonB then
 			UIController.CloseWindows()
+			return
+		end
+		local target = shortcuts[input.KeyCode]
+		if target then
+			UIController.ToggleWindow(target)
 		end
 	end)
 
@@ -373,7 +406,7 @@ function UIController.Start()
 		if DataController.IsLoaded() then
 			local data = DataController.Get()
 			if data.Statistics.StickersPeeled == 0 then
-				UIController.Announce("STICKER PEEL", "Peel every sticker off giant objects with your friends!", Theme.Colors.Pink, 3.5)
+				UIController.Announce("STICKER PEEL", "Peel stickers, fill your bag, sell them at the trash can!", Theme.Colors.Yellow, 4)
 			end
 		end
 	end)
