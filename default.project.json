@@ -1,0 +1,206 @@
+{
+  "name": "StickerPeel",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "Assets": {
+        "$className": "Folder",
+        "LevelPreviews": {
+          "$className": "Folder"
+        }
+      },
+      "Remotes": {
+        "$className": "Folder",
+        "PeelSticker": {
+          "$className": "RemoteEvent"
+        },
+        "StickerData": {
+          "$className": "RemoteEvent"
+        },
+        "StickerUpdate": {
+          "$className": "RemoteEvent"
+        },
+        "UpdateUI": {
+          "$className": "RemoteEvent"
+        },
+        "PartyUpdate": {
+          "$className": "RemoteEvent"
+        },
+        "MatchEvent": {
+          "$className": "RemoteEvent"
+        },
+        "Notify": {
+          "$className": "RemoteEvent"
+        },
+        "Effect": {
+          "$className": "RemoteEvent"
+        },
+        "LeaveParty": {
+          "$className": "RemoteEvent"
+        },
+        "LeaveMatch": {
+          "$className": "RemoteEvent"
+        },
+        "UpdateSettings": {
+          "$className": "RemoteEvent"
+        },
+        "GetData": {
+          "$className": "RemoteFunction"
+        },
+        "BuyUpgrade": {
+          "$className": "RemoteFunction"
+        },
+        "BuyTool": {
+          "$className": "RemoteFunction"
+        },
+        "EquipTool": {
+          "$className": "RemoteFunction"
+        },
+        "UnlockLevel": {
+          "$className": "RemoteFunction"
+        },
+        "CreateParty": {
+          "$className": "RemoteFunction"
+        },
+        "JoinParty": {
+          "$className": "RemoteFunction"
+        },
+        "StartParty": {
+          "$className": "RemoteFunction"
+        },
+        "PartyAction": {
+          "$className": "RemoteFunction"
+        },
+        "ClaimQuest": {
+          "$className": "RemoteFunction"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "src/ServerScriptService"
+    },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Levels": {
+        "$className": "Folder"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CameraMaxZoomDistance": 60,
+        "CharacterWalkSpeed": 18,
+        "CharacterUseJumpPower": false,
+        "CharacterJumpHeight": 8.5
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      }
+    },
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$path": "src/StarterGui",
+      "$properties": {
+        "ResetPlayerGuiOnSpawn": false
+      }
+    },
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+    "SoundService": {
+      "$className": "SoundService",
+      "SFX": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 0.8
+        }
+      },
+      "Music": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 0.5
+        }
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future",
+        "ClockTime": 14.5,
+        "Brightness": 2.6,
+        "GlobalShadows": true,
+        "Ambient": [
+          0.36,
+          0.36,
+          0.42
+        ],
+        "OutdoorAmbient": [
+          0.55,
+          0.55,
+          0.6
+        ],
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.6,
+        "ExposureCompensation": 0.1
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.28,
+          "Offset": 0.2,
+          "Color": [
+            0.78,
+            0.86,
+            0.96
+          ],
+          "Decay": [
+            0.55,
+            0.62,
+            0.8
+          ],
+          "Glare": 0.15,
+          "Haze": 1.2
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.6,
+          "Size": 28,
+          "Threshold": 1.4
+        }
+      },
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.02,
+          "Contrast": 0.08,
+          "Saturation": 0.18
+        }
+      },
+      "SunRays": {
+        "$className": "SunRaysEffect",
+        "$properties": {
+          "Intensity": 0.06,
+          "Spread": 0.8
+        }
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "Gravity": 196.2,
+        "StreamingEnabled": false
+      }
+    }
+  }
+}
