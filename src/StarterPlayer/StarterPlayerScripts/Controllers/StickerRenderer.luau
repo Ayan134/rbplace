@@ -44,7 +44,7 @@ StickerRenderer.Peeled = Signal.new() -- (session, record, userId, reward)
 
 local THICKNESS = Config.Sticker.Thickness
 local CELL = 8
-local BUILD_BUDGET = 500 -- parts created per frame while loading
+local BUILD_BUDGET = 700 -- parts created per frame while loading
 local BACKING_COLOR = Color3.fromRGB(245, 245, 240)
 local LOCAL_PLAYER = Players.LocalPlayer
 
@@ -57,6 +57,15 @@ local flying: { any } = {}
 local rainbowRecords: { [any]: boolean } = {}
 local pool: { BasePart } = {}
 local lowVFX = false
+
+-- Sticker artwork (emoji / image) is only drawn on the nearest stickers (LOD)
+local ART_RADIUS = 55
+local ART_MAX = 350
+local ART_INTERVAL = 0.25
+local artPool: { SurfaceGui } = {}
+local artRecords: { [any]: boolean } = {}
+local artFolder: Folder
+local lastArtUpdate = 0
 local showOthersVFX = true
 
 StickerRenderer.CurrentSessionId = nil :: string?
@@ -81,6 +90,107 @@ local function acquirePart(): Part
 	new.BottomSurface = Enum.SurfaceType.Smooth
 	new.Locked = true
 	return new
+end
+
+------------------------------------------------------------------------
+-- Artwork
+------------------------------------------------------------------------
+
+local function acquireArt(): SurfaceGui
+	local gui = table.remove(artPool)
+	if gui then
+		return gui
+	end
+	gui = Instance.new("SurfaceGui")
+	gui.Name = "StickerArt"
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 48
+	gui.LightInfluence = 0.5
+	gui.MaxDistance = ART_RADIUS + 15
+	gui.ResetOnSpawn = false
+	local emoji = Instance.new("TextLabel")
+	emoji.Name = "Emoji"
+	emoji.BackgroundTransparency = 1
+	emoji.Size = UDim2.fromScale(0.8, 0.8)
+	emoji.Position = UDim2.fromScale(0.5, 0.5)
+	emoji.AnchorPoint = Vector2.new(0.5, 0.5)
+	emoji.TextScaled = true
+	emoji.Font = Enum.Font.GothamBold
+	emoji.TextColor3 = Color3.new(1, 1, 1)
+	emoji.Parent = gui
+	local image = Instance.new("ImageLabel")
+	image.Name = "Image"
+	image.BackgroundTransparency = 1
+	image.Size = UDim2.fromScale(0.86, 0.86)
+	image.Position = UDim2.fromScale(0.5, 0.5)
+	image.AnchorPoint = Vector2.new(0.5, 0.5)
+	image.ScaleType = Enum.ScaleType.Fit
+	image.Visible = false
+	image.Parent = gui
+	return gui
+end
+
+local function detachArt(record)
+	local gui = record.Art
+	if not gui then
+		return
+	end
+	record.Art = nil
+	artRecords[record] = nil
+	gui.Adornee = nil
+	gui.Enabled = false
+	if #artPool < ART_MAX + 50 then
+		table.insert(artPool, gui)
+	else
+		gui:Destroy()
+	end
+end
+
+local function attachArt(record)
+	if record.Art or not record.Part then
+		return
+	end
+	local gui = acquireArt()
+	local kind, content = StickerConfig.GetDesign(record.Info, record.ColorIndex)
+	local emoji = gui:FindFirstChild("Emoji") :: TextLabel
+	local image = gui:FindFirstChild("Image") :: ImageLabel
+	emoji.Visible = kind == "Emoji"
+	image.Visible = kind == "Image"
+	if kind == "Emoji" then
+		emoji.Text = content
+	else
+		image.Image = content
+	end
+	-- Circle stickers are cylinders whose +X axis is the surface normal
+	gui.Face = if record.Circle then Enum.NormalId.Right else Enum.NormalId.Top
+	gui.Adornee = record.Part
+	gui.Enabled = record.Part.Transparency < 1
+	gui.Parent = artFolder
+	record.Art = gui
+	artRecords[record] = true
+end
+
+local function updateArt(focus: Vector3?)
+	local session = StickerRenderer.GetCurrentSession()
+	if not session or not focus then
+		for record in pairs(artRecords) do
+			detachArt(record)
+		end
+		return
+	end
+	local nearby = StickerRenderer.QueryRadius(session, focus, ART_RADIUS)
+	local wanted = {}
+	for i = 1, math.min(#nearby, ART_MAX) do
+		wanted[nearby[i]] = true
+	end
+	for record in pairs(artRecords) do
+		if not wanted[record] or not record.Part then
+			detachArt(record)
+		end
+	end
+	for record in pairs(wanted) do
+		attachArt(record)
+	end
 end
 
 local function releasePart(part: BasePart?)
@@ -272,6 +382,9 @@ function StickerRenderer.RenderPeel(record, progress: number)
 	-- Attached remainder shrinks toward the far edge
 	local attachedLength = l * (1 - p)
 	local part = record.Part :: Part
+	if record.Art then
+		record.Art.Enabled = attachedLength >= 0.03
+	end
 	if attachedLength < 0.03 then
 		part.Transparency = 1
 	else
@@ -307,6 +420,9 @@ end
 
 local function resetFlat(record)
 	clearPeelParts(record)
+	if record.Art then
+		record.Art.Enabled = true
+	end
 	if record.Part then
 		record.Part.Transparency = 0
 		applyShape(record.Part, record.Circle, record.Base, record.SizeX, record.SizeZ)
@@ -356,6 +472,7 @@ function StickerRenderer.Detach(session, record, quiet: boolean?)
 		return
 	end
 	record.Detached = true
+	detachArt(record)
 	activePeels[record] = nil
 	rainbowRecords[record] = nil
 	record.Peel = nil
@@ -422,6 +539,7 @@ local function destroySession(sessionId: string)
 	for _, record in pairs(session.Records) do
 		activePeels[record] = nil
 		rainbowRecords[record] = nil
+		detachArt(record)
 		clearPeelParts(record)
 		releasePart(record.Part)
 		record.Part = nil
@@ -629,6 +747,10 @@ local function update()
 			end
 			session.Alive = alive
 			StickerRenderer.SessionReady:Fire(session)
+			if session.Kind == "Match" then
+				-- Lets the server start the level once everyone's stickers are built
+				Remotes.ClientReady:FireServer(session.Id)
+			end
 			local pending = session.PendingEvents
 			session.PendingEvents = {}
 			for _, event in ipairs(pending) do
@@ -673,6 +795,16 @@ local function update()
 		end
 	end
 
+	-- Artwork LOD around the player
+	if now - lastArtUpdate > ART_INTERVAL then
+		lastArtUpdate = now
+		local character = LOCAL_PLAYER.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local camera = Workspace.CurrentCamera
+		local focus = if root and root:IsA("BasePart") then root.Position elseif camera then camera.Focus.Position else nil
+		updateArt(focus)
+	end
+
 	-- Rainbow stickers cycle hue
 	if next(rainbowRecords) then
 		local hue = (now * 0.35) % 1
@@ -695,6 +827,9 @@ function StickerRenderer.Init(controllers)
 	rootFolder = Instance.new("Folder")
 	rootFolder.Name = "ClientStickers"
 	rootFolder.Parent = Workspace
+	artFolder = Instance.new("Folder")
+	artFolder.Name = "StickerArt"
+	artFolder.Parent = LOCAL_PLAYER:WaitForChild("PlayerGui")
 end
 
 function StickerRenderer.Start()

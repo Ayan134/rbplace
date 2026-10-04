@@ -107,6 +107,22 @@ local function buildParts(modelId: string, parent: Instance): BasePart?
 	return handle
 end
 
+-- Model held in the character's hand (welded, not a Tool, so arms animate naturally).
+-- Returns nil for the bare Hand.
+function ToolModels.BuildHeld(toolInfo): Model?
+	if toolInfo.Model == "Hand" then
+		return nil
+	end
+	local model = Instance.new("Model")
+	model.Name = "HeldTool"
+	model:SetAttribute("ToolId", toolInfo.Id)
+	local handle = buildParts(toolInfo.Model, model)
+	if handle then
+		model.PrimaryPart = handle
+	end
+	return model
+end
+
 -- Tool instance ready to be put in a Backpack.
 function ToolModels.BuildTool(toolInfo): Tool
 	local tool = Instance.new("Tool")

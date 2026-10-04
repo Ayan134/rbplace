@@ -56,7 +56,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	self.LevelName = Components.Label({ Name = "LevelName", Text = "FOUNTAIN", Size = UDim2.new(1, -24, 0, 30), Position = UDim2.fromOffset(12, 6), MaxTextSize = 28, Stroke = 2, Parent = top })
 	self.Difficulty = Components.Label({ Name = "Difficulty", Text = "NORMAL", Size = UDim2.fromOffset(120, 22), Position = UDim2.fromOffset(14, 10), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 18, Stroke = 1.5, Parent = top })
 	self.Timer = Components.Label({ Name = "Timer", Text = "0:00.0", Size = UDim2.fromOffset(120, 22), Position = UDim2.new(1, -134, 0, 10), XAlign = Enum.TextXAlignment.Right, Font = Theme.Fonts.Bold, MaxTextSize = 18, Stroke = 1.5, Parent = top })
-	self.Count = Components.Label({ Name = "Count", Text = "0 / 0 STICKERS", Size = UDim2.new(1, -24, 0, 22), Position = UDim2.fromOffset(12, 38), Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 18, Parent = top })
+	self.Count = Components.Label({ Name = "Count", Text = "0 / 0 stickers", Size = UDim2.new(1, -24, 0, 22), Position = UDim2.fromOffset(12, 38), Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 18, Parent = top })
 	self.Bar = Components.ProgressBar({ Name = "Bar", Size = UDim2.new(1, -28, 0, 30), Position = UDim2.fromOffset(14, 64), Color = Theme.Colors.Green, MaxTextSize = 20, Stroke = 2, StrokeColor = Theme.Colors.PanelLight, Parent = top })
 
 	-- Top bar (coins etc.) reused from the lobby HUD
@@ -120,7 +120,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	-- Combo
 	local combo = Components.Create("Frame", { Name = "Combo", Size = UDim2.fromOffset(220, 90), Position = UDim2.new(1, -40, 0.62, 0), AnchorPoint = Vector2.new(1, 0.5), BackgroundTransparency = 1, Visible = false, Parent = gui })
 	self.ComboFrame = combo
-	self.ComboText = Components.Label({ Text = "COMBO x2", Size = UDim2.new(1, 0, 0, 56), Color = Theme.Colors.Yellow, MaxTextSize = 48, Stroke = 3, Parent = combo })
+	self.ComboText = Components.Label({ Text = "Combo x2", Size = UDim2.new(1, 0, 0, 44), Color = Theme.Colors.Yellow, MaxTextSize = 34, Stroke = 1, Parent = combo })
 	self.ComboBonus = Components.Label({ Text = "", Size = UDim2.new(1, 0, 0, 20), Position = UDim2.fromOffset(0, 54), Font = Theme.Fonts.Bold, Color = Theme.Colors.Green, MaxTextSize = 18, Stroke = 1.5, Parent = combo })
 	self.ComboBar = Components.ProgressBar({ Size = UDim2.new(0.8, 0, 0, 8), Position = UDim2.new(0.1, 0, 0, 78), Color = Theme.Colors.Yellow, Parent = combo })
 	Components.Create("UIScale", { Parent = combo })
@@ -143,7 +143,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	Components.Round(peelButton)
 	Components.Gradient(peelButton, Theme.Lighten(Theme.Colors.Pink, 0.2), Theme.Darken(Theme.Colors.Pink, 0.2))
 	Components.Stroke(peelButton, Color3.new(1, 1, 1), 4)
-	Components.Label({ Text = "✋\nPEEL", Size = UDim2.fromScale(0.8, 0.7), Position = UDim2.fromScale(0.5, 0.5), AnchorPoint = Vector2.new(0.5, 0.5), Stroke = 2.5, Parent = peelButton })
+	Components.Label({ Text = "PEEL", Size = UDim2.fromScale(0.8, 0.7), Position = UDim2.fromScale(0.5, 0.5), AnchorPoint = Vector2.new(0.5, 0.5), Stroke = 2.5, Parent = peelButton })
 	local peelScale = Components.Create("UIScale", { Parent = peelButton })
 	peelButton.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -162,7 +162,7 @@ function GameplayScreen.new(gui: ScreenGui, ctx)
 	-- Leave button
 	Components.Button({
 		Name = "Leave",
-		Text = "🚪 LEAVE",
+		Text = "Leave",
 		Size = UDim2.fromOffset(120, 40),
 		Position = UDim2.new(1, -16, 0, 16),
 		AnchorPoint = Vector2.new(1, 0),
@@ -238,11 +238,11 @@ end
 
 function GameplayScreen:UpdateTeam(team)
 	Components.ClearChildren(self.TeamList, { "UIListLayout" })
-	Components.Label({ Text = "👥 TEAM", Size = UDim2.new(1, 0, 0, 24), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 20, Stroke = 1.5, LayoutOrder = 0, Parent = self.TeamList })
+	Components.Label({ Text = "Team", Size = UDim2.new(1, 0, 0, 24), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 20, Stroke = 1.5, LayoutOrder = 0, Parent = self.TeamList })
 	for index, member in ipairs(team) do
 		local row = Components.Frame({ Name = "Member", Size = UDim2.new(1, 0, 0, 40), Color = Theme.Colors.PanelDark, Transparency = if member.Present == false then 0.7 else 0.25, Corner = 10, LayoutOrder = index, Parent = self.TeamList })
 		Components.Avatar(member.UserId, { Size = UDim2.fromOffset(32, 32), Position = UDim2.fromOffset(4, 4), StrokeColor = if member.UserId == LOCAL_PLAYER.UserId then Theme.Colors.Pink else nil, Parent = row })
-		Components.Label({ Text = member.Name .. (if member.Present == false then " (left)" else ""), Size = UDim2.new(1, -110, 1, -10), Position = UDim2.fromOffset(42, 5), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, MaxTextSize = 16, Parent = row })
+		Components.Label({ Text = member.Name .. (if member.Present == false then " · left" else ""), Size = UDim2.new(1, -110, 1, -10), Position = UDim2.fromOffset(42, 5), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, MaxTextSize = 16, Parent = row })
 		Components.Label({ Text = Utility.FormatNumber(member.Peeled), Size = UDim2.fromOffset(60, 30), Position = UDim2.new(1, -66, 0, 5), XAlign = Enum.TextXAlignment.Right, Color = Theme.Colors.Cyan, MaxTextSize = 20, Stroke = 1.5, Parent = row })
 		if member.UserId == LOCAL_PLAYER.UserId then
 			self.MyPeeled = member.Peeled
@@ -262,10 +262,10 @@ function GameplayScreen:ShowCombo(combo: number, multiplier: number)
 		return
 	end
 	self.ComboFrame.Visible = true
-	self.ComboText.Text = "COMBO x" .. combo
+	self.ComboText.Text = "Combo x" .. combo
 	local color = if combo >= 50 then Theme.Colors.Pink elseif combo >= 25 then Theme.Colors.Orange elseif combo >= 10 then Theme.Colors.Yellow else Theme.Colors.Cyan
 	self.ComboText.TextColor3 = color
-	self.ComboBonus.Text = if multiplier > 1 then string.format("+%d%% COINS", math.floor((multiplier - 1) * 100 + 0.5)) else ""
+	self.ComboBonus.Text = if multiplier > 1 then string.format("+%d%% coins", math.floor((multiplier - 1) * 100 + 0.5)) else ""
 	local scale = self.ComboFrame:FindFirstChildOfClass("UIScale")
 	if scale then
 		scale.Scale = if combo % 5 == 0 then 1.35 else 1.15
@@ -294,7 +294,7 @@ function GameplayScreen:UpdateFinder(session)
 		return
 	end
 	self.Finder.Visible = true
-	self.Finder.Text = string.format("🔍 Only %d sticker%s left — follow the markers!", session.Alive, if session.Alive == 1 then "" else "s")
+	self.Finder.Text = string.format("Only %d sticker%s left — follow the markers", session.Alive, if session.Alive == 1 then "" else "s")
 	local alive = self.Ctx.Controllers.StickerRenderer.GetAliveRecords(session)
 	local seen = {}
 	for _, record in ipairs(alive) do
@@ -328,15 +328,15 @@ function GameplayScreen:Tick()
 		local total = session.Total
 		local cleaned = total - session.Alive
 		local fraction = if total > 0 then cleaned / total else 0
-		self.Count.Text = string.format("%s / %s STICKERS", Utility.FormatNumber(cleaned), Utility.FormatNumber(total))
-		self.Bar.Set(fraction, Utility.FormatPercent(fraction) .. " CLEANED", false)
+		self.Count.Text = string.format("%s / %s stickers", Utility.FormatNumber(cleaned), Utility.FormatNumber(total))
+		self.Bar.Set(fraction, Utility.FormatPercent(fraction) .. " cleaned", false)
 		if self.LastFinderCheck == nil or os.clock() - self.LastFinderCheck > 0.5 then
 			self.LastFinderCheck = os.clock()
 			self:UpdateFinder(session)
 		end
 	end
 	if not self.Stopped and self.StartClock then
-		self.Timer.Text = "⏱ " .. Utility.FormatTime(os.clock() - self.StartClock)
+		self.Timer.Text = Utility.FormatTime(os.clock() - self.StartClock)
 	end
 	self.PlayerPeeled.Text = Utility.FormatNumber(self.MyPeeled or 0) .. " peeled"
 

@@ -1,6 +1,7 @@
 --[[
 	Components
 	Small UI building blocks used by every screen (code-built UI that scales on any device).
+	Minimal style: flat surfaces, hairline strokes, one accent color.
 ]]
 
 local RunService = game:GetService("RunService")
@@ -59,17 +60,19 @@ end
 function Components.Stroke(parent: Instance, color: Color3?, thickness: number?, transparency: number?): UIStroke
 	return Create("UIStroke", {
 		Color = color or Theme.Colors.Stroke,
-		Thickness = thickness or 2,
-		Transparency = transparency or 0,
+		Thickness = math.min(thickness or 1, 1.5),
+		Transparency = transparency or (if color then 0.55 else 0.9),
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		Parent = parent,
 	})
 end
 
-function Components.TextStroke(parent: Instance, thickness: number?): UIStroke
+-- Very soft shadow so HUD text stays readable over the 3D world
+function Components.TextStroke(parent: Instance, _thickness: number?): UIStroke
 	return Create("UIStroke", {
-		Color = Color3.fromRGB(30, 20, 50),
-		Thickness = thickness or 2,
+		Color = Color3.new(0, 0, 0),
+		Thickness = 1,
+		Transparency = 0.8,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 		Parent = parent,
 	})
@@ -126,9 +129,7 @@ function Components.Frame(props: { [string]: any }): Frame
 	if props.Stroke then
 		Components.Stroke(frame, props.StrokeColor, props.Stroke)
 	end
-	if props.Gradient then
-		Components.Gradient(frame, props.Gradient[1], props.Gradient[2], props.Gradient[3])
-	end
+	-- Gradients are ignored in the minimal style; the base color is used flat
 	return frame
 end
 
@@ -170,15 +171,22 @@ export type Button = {
 	SetColor: (color: Color3) -> (),
 }
 
--- Big candy-style button with hover/press animation and click sound.
+-- Flat button. Accent / danger colors are kept, everything else becomes neutral.
+local function buttonFill(color: Color3): Color3
+	if color == Theme.Colors.Accent or color == Theme.Colors.Red or color == Theme.Colors.Grey then
+		return color
+	end
+	return Theme.Colors.PanelLight
+end
+
 function Components.Button(props: { [string]: any }): Button
-	local color: Color3 = props.Color or Theme.Colors.Pink
+	local color: Color3 = buttonFill(props.Color or Theme.Colors.PanelLight)
 	local button = Create("TextButton", {
 		Name = props.Name or "Button",
-		Size = props.Size or UDim2.fromOffset(160, 48),
+		Size = props.Size or UDim2.fromOffset(160, 44),
 		Position = props.Position or UDim2.new(),
 		AnchorPoint = props.AnchorPoint or Vector2.zero,
-		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		AutoButtonColor = false,
 		Text = "",
@@ -187,20 +195,17 @@ function Components.Button(props: { [string]: any }): Button
 		Visible = if props.Visible == nil then true else props.Visible,
 		Parent = props.Parent,
 	})
-	Components.Corner(button, props.Corner or 12)
-	local gradient = Components.Gradient(button, Theme.Lighten(color, 0.15), Theme.Darken(color, 0.15))
-	local stroke = Components.Stroke(button, Theme.Darken(color, 0.45), 2.5)
+	Components.Corner(button, props.Corner or 8)
 	local scale = Create("UIScale", { Parent = button })
 	local label = Components.Label({
 		Name = "Text",
 		Text = props.Text or "",
-		Size = UDim2.new(1, -12, 1, -10),
+		Size = UDim2.new(1, -16, 1, -14),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Font = props.Font or Theme.Fonts.Title,
-		Color = props.TextColor or Theme.Colors.Text,
-		MaxTextSize = props.MaxTextSize or 26,
-		Stroke = 1.5,
+		Color = props.TextColor or Theme.TextOn(color),
+		MaxTextSize = math.min(props.MaxTextSize or 18, 20),
 		ZIndex = (props.ZIndex or 1) + 1,
 		Parent = button,
 	})
@@ -208,14 +213,10 @@ function Components.Button(props: { [string]: any }): Button
 	local enabled = true
 	local hovered = false
 	local function refresh()
-		local target = if not enabled then 1 elseif hovered then 1.05 else 1
-		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad), { Scale = target }):Play()
-	end
-	local function applyColor(c: Color3)
-		color = c
-		local shown = if enabled then c else Theme.Colors.Grey
-		gradient.Color = ColorSequence.new(Theme.Lighten(shown, 0.15), Theme.Darken(shown, 0.15))
-		stroke.Color = Theme.Darken(shown, 0.45)
+		local shown = if not enabled then Theme.Colors.Grey elseif hovered then Theme.Lighten(color, 0.08) else color
+		TweenService:Create(button, TweenInfo.new(0.12), { BackgroundColor3 = shown }):Play()
+		label.TextColor3 = if enabled then (props.TextColor or Theme.TextOn(color)) else Theme.Colors.TextDim
+		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad), { Scale = if enabled and hovered then 1.02 else 1 }):Play()
 	end
 	button.MouseEnter:Connect(function()
 		hovered = true
@@ -227,7 +228,7 @@ function Components.Button(props: { [string]: any }): Button
 	end)
 	button.MouseButton1Down:Connect(function()
 		if enabled then
-			TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.94 }):Play()
+			TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.97 }):Play()
 		end
 	end)
 	button.MouseButton1Up:Connect(refresh)
@@ -248,14 +249,14 @@ function Components.Button(props: { [string]: any }): Button
 		Label = label,
 		SetEnabled = function(value: boolean)
 			enabled = value
-			applyColor(color)
 			refresh()
 		end,
 		SetText = function(text: string)
 			label.Text = text
 		end,
 		SetColor = function(c: Color3)
-			applyColor(c)
+			color = if c == Theme.Colors.Accent or c == Theme.Colors.Red or c == Theme.Colors.Grey then c else Theme.Colors.PanelLight
+			refresh()
 		end,
 	}
 end
@@ -273,31 +274,28 @@ function Components.ProgressBar(props: { [string]: any }): ProgressBar
 		Size = props.Size or UDim2.new(1, 0, 0, 20),
 		Position = props.Position,
 		AnchorPoint = props.AnchorPoint,
-		Color = props.BackgroundColor or Theme.Colors.PanelDark,
+		Color = props.BackgroundColor or Theme.Colors.PanelLight,
 		Corner = props.Corner or 100,
 		LayoutOrder = props.LayoutOrder,
-		Stroke = props.Stroke,
-		StrokeColor = props.StrokeColor,
 		Clips = true,
 		Parent = props.Parent,
 	})
 	local fill = Components.Frame({
 		Name = "Fill",
 		Size = UDim2.fromScale(0, 1),
-		Color = Color3.new(1, 1, 1),
+		Color = props.Color or Theme.Colors.Accent,
 		Corner = props.Corner or 100,
 		Parent = background,
 	})
-	local color: Color3 = props.Color or Theme.Colors.Green
-	Components.Gradient(fill, Theme.Lighten(color, 0.2), Theme.Darken(color, 0.1))
 	local label = Components.Label({
 		Name = "Text",
 		Text = "",
 		Size = UDim2.new(1, -10, 1, -4),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		MaxTextSize = props.MaxTextSize or 20,
-		Stroke = 1.5,
+		Font = Theme.Fonts.Title,
+		MaxTextSize = props.MaxTextSize or 14,
+		Stroke = 1,
 		ZIndex = 3,
 		Parent = background,
 	})
@@ -319,36 +317,35 @@ function Components.ProgressBar(props: { [string]: any }): ProgressBar
 	}
 end
 
--- Rounded pill with an icon and value ("🪙 12,450")
+-- Compact value pill ("● 12,450")
 function Components.Pill(props: { [string]: any })
 	local pill = Components.Frame({
 		Name = props.Name or "Pill",
-		Size = props.Size or UDim2.fromOffset(170, 44),
-		Color = Theme.Colors.PanelDark,
-		Transparency = 0.1,
+		Size = props.Size or UDim2.fromOffset(150, 38),
+		Color = Theme.Colors.Panel,
+		Transparency = 0.2,
 		Corner = 100,
-		Stroke = 2.5,
-		StrokeColor = props.Color or Theme.Colors.Stroke,
 		LayoutOrder = props.LayoutOrder,
 		Parent = props.Parent,
 	})
 	local icon = Components.Label({
 		Name = "Icon",
 		Text = props.Icon or "",
-		Size = UDim2.new(0, 36, 1, -8),
-		Position = UDim2.fromOffset(6, 4),
+		Size = UDim2.new(0, 26, 1, -14),
+		Position = UDim2.fromOffset(10, 7),
 		Font = Theme.Fonts.Title,
+		Color = props.Color or Theme.Colors.Text,
 		Parent = pill,
 	})
 	local value = Components.Label({
 		Name = "Value",
 		Text = props.Text or "0",
-		Size = UDim2.new(1, -52, 1, -10),
-		Position = UDim2.fromOffset(44, 5),
+		Size = UDim2.new(1, -52, 1, -14),
+		Position = UDim2.fromOffset(40, 7),
 		XAlign = Enum.TextXAlignment.Left,
-		Color = props.Color or Theme.Colors.Text,
-		MaxTextSize = 26,
-		Stroke = 1.5,
+		Font = Theme.Fonts.Title,
+		Color = Theme.Colors.Text,
+		MaxTextSize = 18,
 		Parent = pill,
 	})
 	return { Instance = pill, Icon = icon, Value = value }
@@ -367,7 +364,7 @@ function Components.Avatar(userId: number, props: { [string]: any }): ImageLabel
 	})
 	Components.Round(image)
 	if props.StrokeColor then
-		Components.Stroke(image, props.StrokeColor, 2.5)
+		Components.Stroke(image, props.StrokeColor, 1.5, 0.2)
 	end
 	return image
 end
@@ -437,9 +434,8 @@ export type Window = {
 	IsOpen: () -> boolean,
 }
 
--- Modal window with a title bar and close button.
+-- Modal window: flat panel, title, hairline divider, close button.
 function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Window
-	local accent: Color3 = props.Color or Theme.Colors.Pink
 	local holder = Create("Frame", {
 		Name = props.Name or "Window",
 		Size = props.Size or UDim2.fromOffset(860, 540),
@@ -453,56 +449,55 @@ function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Wind
 	local panel = Components.Frame({
 		Name = "Panel",
 		Color = Theme.Colors.Panel,
-		Corner = 20,
-		Stroke = 4,
-		StrokeColor = Theme.Darken(accent, 0.3),
-		Gradient = { Theme.Colors.PanelLight, Theme.Colors.Panel, 90 },
+		Transparency = 0.04,
+		Corner = 14,
+		Stroke = 1,
 		Parent = holder,
 	})
-	local header = Components.Frame({
-		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 64),
-		Color = Color3.new(1, 1, 1),
-		Corner = 20,
-		Gradient = { Theme.Lighten(accent, 0.1), Theme.Darken(accent, 0.15), 90 },
-		Parent = panel,
-	})
-	-- Square off the header's bottom corners
-	Components.Frame({ Name = "HeaderFill", Size = UDim2.new(1, 0, 0, 20), Position = UDim2.new(0, 0, 1, -20), Color = Color3.new(1, 1, 1), Corner = false, Gradient = { Theme.Darken(accent, 0.1), Theme.Darken(accent, 0.15), 90 }, Parent = header })
 	local title = Components.Label({
 		Name = "Title",
 		Text = props.Title or "",
-		Size = UDim2.new(1, -140, 0, 46),
-		Position = UDim2.fromOffset(24, 9),
+		Size = UDim2.new(1, -120, 0, 30),
+		Position = UDim2.fromOffset(24, 18),
 		XAlign = Enum.TextXAlignment.Left,
-		MaxTextSize = 36,
-		Stroke = 2.5,
+		Font = Theme.Fonts.Title,
+		MaxTextSize = 24,
 		ZIndex = 2,
-		Parent = header,
+		Parent = panel,
 	})
+	Components.Frame({ Name = "Divider", Size = UDim2.new(1, -48, 0, 1), Position = UDim2.fromOffset(24, 62), Color = Color3.new(1, 1, 1), Transparency = 0.92, Corner = false, Parent = panel })
 	local content = Create("Frame", {
 		Name = "Content",
-		Size = UDim2.new(1, -32, 1, -84),
-		Position = UDim2.fromOffset(16, 72),
+		Size = UDim2.new(1, -48, 1, -88),
+		Position = UDim2.fromOffset(24, 76),
 		BackgroundTransparency = 1,
 		Parent = panel,
 	})
 
 	local isOpen = false
 	local window: Window
-	local closeButton = Components.Button({
+	local closeButton = Create("TextButton", {
 		Name = "Close",
 		Text = "✕",
-		Size = UDim2.fromOffset(46, 46),
-		Position = UDim2.new(1, -56, 0, 9),
-		Color = Theme.Colors.Red,
+		Font = Theme.Fonts.Title,
+		TextSize = 20,
+		TextColor3 = Theme.Colors.TextDim,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(40, 40),
+		Position = UDim2.new(1, -56, 0, 13),
 		ZIndex = 3,
-		OnClick = function()
-			window.Close()
-		end,
-		Parent = header,
+		Parent = panel,
 	})
-	closeButton.Instance.ZIndex = 3
+	closeButton.MouseEnter:Connect(function()
+		closeButton.TextColor3 = Theme.Colors.Text
+	end)
+	closeButton.MouseLeave:Connect(function()
+		closeButton.TextColor3 = Theme.Colors.TextDim
+	end)
+	closeButton.Activated:Connect(function()
+		playSound("Click")
+		window.Close()
+	end)
 
 	window = {
 		Gui = holder,
@@ -514,8 +509,8 @@ function Components.Window(screenGui: ScreenGui, props: { [string]: any }): Wind
 			end
 			isOpen = true
 			holder.Visible = true
-			scale.Scale = 0.85
-			TweenService:Create(scale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+			scale.Scale = 0.96
+			TweenService:Create(scale, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 			playSound("Open")
 			if props.OnOpen then
 				props.OnOpen()
@@ -545,8 +540,8 @@ function Components.Scroll(props: { [string]: any }): ScrollingFrame
 		Position = props.Position or UDim2.new(),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 8,
-		ScrollBarImageColor3 = Theme.Colors.Stroke,
+		ScrollBarThickness = 4,
+		ScrollBarImageColor3 = Theme.Colors.TextDim,
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = props.Automatic or Enum.AutomaticSize.Y,
 		ScrollingDirection = props.Direction or Enum.ScrollingDirection.Y,
@@ -575,8 +570,8 @@ end
 -- Pops a GuiObject in with a bouncy scale animation.
 function Components.Pop(guiObject: GuiObject, from: number?)
 	local scale = guiObject:FindFirstChildOfClass("UIScale") or Create("UIScale", { Parent = guiObject })
-	scale.Scale = from or 0.6
-	TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	scale.Scale = math.max(from or 0.9, 0.9)
+	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 end
 
 function Components.Stars(count: number, max: number?): string

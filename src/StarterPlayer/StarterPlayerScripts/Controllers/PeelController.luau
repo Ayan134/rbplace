@@ -99,7 +99,7 @@ local function getMarker(slot: number): BillboardGui
 	local background = Instance.new("Frame")
 	background.Name = "Background"
 	background.Size = UDim2.fromScale(1, 1)
-	background.BackgroundColor3 = Color3.fromRGB(30, 24, 54)
+	background.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 	background.BackgroundTransparency = 0.15
 	background.Parent = marker
 	Instance.new("UICorner", background).CornerRadius = UDim.new(0, 10)
@@ -108,10 +108,10 @@ local function getMarker(slot: number): BillboardGui
 	index.Name = "Index"
 	index.Size = UDim2.fromOffset(26, 26)
 	index.Position = UDim2.fromOffset(4, 4)
-	index.BackgroundColor3 = Color3.fromRGB(255, 92, 170)
-	index.Font = Enum.Font.FredokaOne
+	index.BackgroundColor3 = Color3.fromRGB(110, 222, 164)
+	index.Font = Enum.Font.GothamBold
 	index.TextScaled = true
-	index.TextColor3 = Color3.new(1, 1, 1)
+	index.TextColor3 = Color3.fromRGB(18, 18, 22)
 	index.Text = tostring(slot)
 	index.Parent = background
 	Instance.new("UICorner", index).CornerRadius = UDim.new(1, 0)
@@ -121,7 +121,7 @@ local function getMarker(slot: number): BillboardGui
 	percent.Size = UDim2.new(1, -36, 0, 26)
 	percent.Position = UDim2.fromOffset(34, 4)
 	percent.BackgroundTransparency = 1
-	percent.Font = Enum.Font.FredokaOne
+	percent.Font = Enum.Font.GothamBold
 	percent.TextScaled = true
 	percent.TextColor3 = Color3.new(1, 1, 1)
 	percent.Text = "0%"

@@ -1,8 +1,11 @@
 --[[
 	ToolService
-	Tool purchases, equipping and giving the equipped tool to the character.
-	The tool is a real Tool instance held in the right hand. The backpack UI is hidden
-	on the client, and the tool is re-equipped automatically if it gets unequipped.
+	Tool purchases, equipping and attaching the equipped tool to the character.
+
+	The tool model is welded into the right hand instead of being a Roblox Tool: a Tool
+	forces the "arm held out" pose all the time, while a welded model lets the default
+	idle / walk / run animations play normally. The peel swing is played by the client
+	(AnimationController) and replicates like any character animation.
 ]]
 
 local Players = game:GetService("Players")
@@ -21,70 +24,61 @@ local RateLimiter = require(script.Parent.Parent.Systems.RateLimiter)
 local ToolService = {}
 
 local limiter = RateLimiter.new(4, 8)
-local currentTools: { [Player]: Tool } = {}
 
-local function removeTools(player: Player)
-	local function clear(container: Instance?)
-		if not container then
-			return
-		end
-		for _, child in ipairs(container:GetChildren()) do
-			if child:IsA("Tool") and child:GetAttribute("ToolId") then
-				child:Destroy()
-			end
+-- Tool points forward-down out of the fist instead of straight down along the arm
+local GRIP = CFrame.Angles(math.rad(60), 0, 0)
+
+local function removeHeld(character: Model)
+	for _, child in ipairs(character:GetChildren()) do
+		if child.Name == "HeldTool" then
+			child:Destroy()
 		end
 	end
-	clear(player:FindFirstChildOfClass("Backpack"))
-	clear(player.Character)
-	currentTools[player] = nil
 end
 
-function ToolService.GiveEquippedTool(player: Player)
+function ToolService.AttachEquippedTool(player: Player)
 	local data = PlayerDataService.Get(player)
 	local character = player.Character
 	if not data or not character then
 		return
 	end
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local backpack = player:FindFirstChildOfClass("Backpack")
-	if not humanoid or not backpack then
-		return
-	end
-	removeTools(player)
-
+	removeHeld(character)
 	local info = ToolConfig.Get(data.EquippedTool) or ToolConfig.Tools.Hand
-	local tool = ToolModels.BuildTool(info)
-	tool.Parent = backpack
-	currentTools[player] = tool
-	humanoid:EquipTool(tool)
+	character:SetAttribute("ToolId", info.Id)
 
-	-- Keep the tool in hand
-	tool.AncestryChanged:Connect(function()
-		if currentTools[player] ~= tool then
-			return
-		end
-		task.defer(function()
-			if currentTools[player] == tool and tool.Parent == backpack and humanoid.Parent and humanoid.Health > 0 then
-				humanoid:EquipTool(tool)
-			end
-		end)
-	end)
-end
-
--- Plays the arm swing animation: a "toolanim" StringValue makes the default Animate
--- script play its tool slash animation, which replicates to everyone.
-function ToolService.PlayPeelAnimation(player: Player)
-	local tool = currentTools[player]
-	if not tool or not tool.Parent or not tool.Parent:IsA("Model") then
+	local model = ToolModels.BuildHeld(info)
+	if not model then
+		return -- bare hands
+	end
+	local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
+	local handle = model.PrimaryPart
+	if not hand or not hand:IsA("BasePart") or not handle then
+		model:Destroy()
 		return
 	end
-	local anim = Instance.new("StringValue")
-	anim.Name = "toolanim"
-	anim.Value = "Slash"
-	anim.Parent = tool
-	task.delay(0.3, function()
-		anim:Destroy()
-	end)
+	local gripAttachment = hand:FindFirstChild("RightGripAttachment")
+	local gripOffset = if gripAttachment and gripAttachment:IsA("Attachment")
+		then gripAttachment.CFrame
+		else CFrame.new(0, -hand.Size.Y / 2, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+
+	handle.CFrame = hand.CFrame * gripOffset * GRIP
+	for _, descendant in ipairs(model:GetDescendants()) do
+		if descendant:IsA("BasePart") then
+			descendant.Anchored = false
+			descendant.CanCollide = false
+			descendant.CanQuery = false
+			descendant.CanTouch = false
+			descendant.Massless = true
+		end
+	end
+	local weld = Instance.new("Weld")
+	weld.Name = "HandWeld"
+	weld.Part0 = hand
+	weld.Part1 = handle
+	weld.C0 = gripOffset * GRIP
+	weld.C1 = CFrame.new()
+	weld.Parent = handle
+	model.Parent = character
 end
 
 function ToolService.Buy(player: Player, toolId: any)
@@ -112,7 +106,7 @@ function ToolService.Buy(player: Player, toolId: any)
 		d.UnlockedTools[toolId] = true
 		d.EquippedTool = toolId
 	end)
-	ToolService.GiveEquippedTool(player)
+	ToolService.AttachEquippedTool(player)
 	return { Success = true }
 end
 
@@ -133,7 +127,7 @@ function ToolService.Equip(player: Player, toolId: any)
 	PlayerDataService.Update(player, function(d)
 		d.EquippedTool = toolId
 	end)
-	ToolService.GiveEquippedTool(player)
+	ToolService.AttachEquippedTool(player)
 	return { Success = true }
 end
 
@@ -148,13 +142,14 @@ end
 
 function ToolService.Start()
 	local function onCharacter(player: Player, character: Model)
-		local humanoid = character:WaitForChild("Humanoid", 10)
-		if not humanoid then
-			return
+		-- Wait for the avatar (appearance, hands) to finish loading
+		local deadline = os.clock() + 6
+		while not player:HasAppearanceLoaded() and os.clock() < deadline do
+			task.wait(0.1)
 		end
-		task.wait(0.2)
-		if player.Character == character then
-			ToolService.GiveEquippedTool(player)
+		local humanoid = character:WaitForChild("Humanoid", 10)
+		if humanoid and player.Character == character then
+			ToolService.AttachEquippedTool(player)
 		end
 	end
 	local function onPlayer(player: Player)
@@ -169,9 +164,6 @@ function ToolService.Start()
 	for _, player in ipairs(Players:GetPlayers()) do
 		onPlayer(player)
 	end
-	Players.PlayerRemoving:Connect(function(player)
-		currentTools[player] = nil
-	end)
 end
 
 return ToolService

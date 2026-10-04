@@ -64,18 +64,19 @@ local Config = {
 		ResultsDuration = 30, -- seconds before players are returned to the lobby automatically
 		CoopBonusPerPlayer = 0.15, -- +15% completion reward for every extra player
 		SpeedBonusMax = 0.5, -- up to +50% completion reward for beating par time
-		ParSecondsPerSticker = 1.15,
+		ParSecondsPerSticker = 0.6,
 		AfkContributionThreshold = 0.02, -- players below 2% contribution get half completion reward
 		FinderThreshold = 0.015, -- markers appear on the last 1.5% of stickers (min 5)
 		FinderMinimum = 5,
-		ChunkSize = 900, -- stickers per StickerData network chunk
+		ChunkSize = 1000, -- stickers per StickerData network chunk
+		LoadTimeout = 30, -- max seconds to wait for every client to finish loading stickers
 		HardToReachHeight = 17, -- surfaces above this height (out of reach from the ground) are hard to reach
 		HardToReachRewardBonus = 1.25,
 		ArenaJumpHeight = 10,
 	},
 
 	Lobby = {
-		ShowcaseStickerCount = 260,
+		ShowcaseStickerCount = 700,
 		ShowcaseRegenerateAt = 0.7, -- regenerate when 70% peeled
 		GhostPeelInterval = 1.4, -- demo "ghost" peels a sticker every N seconds
 		ShowcaseLevel = "Fountain",
@@ -99,7 +100,7 @@ local Config = {
 		MinSize = 0.45,
 		MaxSize = 9,
 		CircleChance = 0.35,
-		MaxPerLevel = 6000,
+		MaxPerLevel = 12000,
 	},
 
 	XP = {

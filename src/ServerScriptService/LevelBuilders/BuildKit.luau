@@ -11,8 +11,15 @@
 	  └── Configuration    LevelId + metadata attributes
 
 	Coordinates are relative to the model origin (ground level, object centered at 0,0).
+	Everything is multiplied by the level's LevelConfig.ModelScale, so builders are written
+	at scale 1 and a level can be made bigger by changing one number. Climbing helpers keep
+	human-sized steps and truss widths.
 	A hand-made model with this layout placed in ServerStorage.Levels overrides the builder.
 ]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LevelConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("LevelConfig"))
 
 local BuildKit = {}
 BuildKit.__index = BuildKit
@@ -32,7 +39,8 @@ export type PartProps = {
 	Attributes: { [string]: any }?,
 }
 
-function BuildKit.new(levelId: string)
+function BuildKit.new(levelId: string, scaleOverride: number?)
+	local levelInfo = LevelConfig.Get(levelId)
 	local model = Instance.new("Model")
 	model.Name = levelId
 
@@ -49,11 +57,13 @@ function BuildKit.new(levelId: string)
 		StickerSurfaces = folder("StickerSurfaces"),
 		Climb = folder("Climb"),
 		LevelId = levelId,
+		Scale = scaleOverride or (levelInfo and levelInfo.ModelScale) or 1,
 	}, BuildKit)
 
 	local config = Instance.new("Configuration")
 	config.Name = "Configuration"
 	config:SetAttribute("LevelId", levelId)
+	config:SetAttribute("ModelScale", self.Scale)
 	config.Parent = model
 	self.Configuration = config
 
@@ -73,12 +83,17 @@ function BuildKit.new(levelId: string)
 	return self
 end
 
-local function makePart(props: PartProps, parent: Instance): BasePart
+local function scaleCFrame(cframe: CFrame, scale: number): CFrame
+	return CFrame.new(cframe.Position * scale) * cframe.Rotation
+end
+
+local function makePart(props: PartProps, parent: Instance, scale: number?): BasePart
+	local s = scale or 1
 	local class = props.Class or "Part"
 	local part = Instance.new(class) :: BasePart
 	part.Name = props.Name or "Part"
-	part.Size = props.Size
-	part.CFrame = props.CFrame
+	part.Size = props.Size * s
+	part.CFrame = scaleCFrame(props.CFrame, s)
 	part.Color = props.Color or Color3.fromRGB(200, 200, 200)
 	part.Material = props.Material or Enum.Material.SmoothPlastic
 	if props.Shape and part:IsA("Part") then
@@ -102,12 +117,12 @@ end
 
 -- Structural / decorative part (no stickers)
 function BuildKit:Part(props: PartProps): BasePart
-	return makePart(props, self.Geometry)
+	return makePart(props, self.Geometry, self.Scale)
 end
 
 -- Part covered with stickers
 function BuildKit:Surface(props: PartProps, zone: string?, attributes: { [string]: any }?): BasePart
-	local part = makePart(props, self.StickerSurfaces)
+	local part = makePart(props, self.StickerSurfaces, self.Scale)
 	if zone then
 		part:SetAttribute("Zone", zone)
 	end
@@ -121,11 +136,12 @@ end
 
 -- Climbable truss
 function BuildKit:Truss(position: Vector3, height: number, rotation: CFrame?): BasePart
+	local s = self.Scale
 	return makePart({
 		Name = "Truss",
 		Class = "TrussPart",
-		Size = Vector3.new(2, height, 2),
-		CFrame = CFrame.new(position + Vector3.new(0, height / 2, 0)) * (rotation or CFrame.new()),
+		Size = Vector3.new(2, height * s, 2),
+		CFrame = CFrame.new(position * s + Vector3.new(0, height * s / 2, 0)) * (rotation or CFrame.new()),
 		Color = Color3.fromRGB(255, 196, 40),
 		Material = Enum.Material.Metal,
 	}, self.Climb)
@@ -133,6 +149,9 @@ end
 
 -- Walkable scaffold platform
 function BuildKit:Platform(cframe: CFrame, size: Vector3): BasePart
+	local s = self.Scale
+	cframe = scaleCFrame(cframe, s)
+	size = Vector3.new(size.X * s, size.Y, size.Z * s)
 	local platform = makePart({
 		Name = "Platform",
 		Size = size,
@@ -157,6 +176,10 @@ end
 
 -- Staircase from `from` (ground) climbing along `direction` to `height`
 function BuildKit:Stairs(from: Vector3, direction: Vector3, height: number, width: number, color: Color3?)
+	-- Scaled length/height, but every step stays a walkable 1-stud rise
+	from *= self.Scale
+	height *= self.Scale
+	width *= self.Scale
 	local steps = math.ceil(height / 1)
 	local flat = Vector3.new(direction.X, 0, direction.Z).Unit
 	local look = CFrame.lookAt(Vector3.zero, flat)
@@ -184,6 +207,8 @@ function BuildKit.ZCylinder(center: Vector3, length: number, diameter: number): 
 end
 
 function BuildKit:SetSpawn(position: Vector3, lookAt: Vector3)
+	position = Vector3.new(position.X * self.Scale, 3, position.Z * self.Scale)
+	lookAt *= self.Scale
 	local spawn = Instance.new("Part")
 	spawn.Name = "SpawnPoint"
 	spawn.Size = Vector3.new(6, 1, 6)
@@ -198,6 +223,8 @@ function BuildKit:SetSpawn(position: Vector3, lookAt: Vector3)
 end
 
 function BuildKit:SetFinish(position: Vector3, size: Vector3)
+	position *= self.Scale
+	size *= self.Scale
 	local finish = Instance.new("Part")
 	finish.Name = "FinishArea"
 	finish.Size = size
@@ -217,7 +244,7 @@ function BuildKit:Finish(): Model
 	end
 	if not self.Model:FindFirstChild("FinishArea") then
 		local cf, size = self.Model:GetBoundingBox()
-		self:SetFinish(cf.Position, size)
+		self:SetFinish(cf.Position / self.Scale, size / self.Scale)
 	end
 	local _, size = self.Model:GetBoundingBox()
 	self.Configuration:SetAttribute("BoundsSize", size)

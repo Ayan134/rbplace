@@ -70,13 +70,14 @@ local function acquireText(): BillboardGui
 	label.Name = "Label"
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.FredokaOne
+	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Parent = gui
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2.5
-	stroke.Color = Color3.fromRGB(40, 24, 60)
+	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+	stroke.Transparency = 0.4
 	stroke.Parent = label
 	local scale = Instance.new("UIScale")
 	scale.Parent = label

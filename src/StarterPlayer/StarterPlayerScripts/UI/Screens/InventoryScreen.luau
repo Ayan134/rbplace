@@ -25,7 +25,7 @@ function InventoryScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "InventoryWindow",
-		Title = "🎒 INVENTORY",
+		Title = "Inventory",
 		Color = Theme.Colors.Green,
 		Size = UDim2.fromOffset(1000, 600),
 		OnOpen = function()
@@ -46,7 +46,7 @@ function InventoryScreen.new(gui: ScreenGui, ctx)
 
 	local stats = Components.Frame({ Name = "Stats", Size = UDim2.new(0, 254, 1, 0), Position = UDim2.new(1, -254, 0, 0), Color = Theme.Colors.PanelDark, Transparency = 0.2, Corner = 14, Parent = content })
 	Components.Padding(stats, 12)
-	Components.Label({ Text = "📊 YOUR STATS", Size = UDim2.new(1, 0, 0, 30), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 24, Stroke = 1.5, Parent = stats })
+	Components.Label({ Text = "Your stats", Size = UDim2.new(1, 0, 0, 30), XAlign = Enum.TextXAlignment.Left, MaxTextSize = 24, Stroke = 1.5, Parent = stats })
 	self.StatsText = Components.Label({
 		Text = "",
 		Size = UDim2.new(1, 0, 1, -40),
@@ -86,11 +86,11 @@ function InventoryScreen:Refresh()
 		local _, buttonArea = ToolCard.Build(tool, { LayoutOrder = index, Highlight = equipped, Locked = not owned, Parent = self.Scroll })
 		local button
 		if equipped then
-			button = Components.Button({ Text = "EQUIPPED", Color = Theme.Colors.Yellow })
+			button = Components.Button({ Text = "Equipped", Color = Theme.Colors.Yellow })
 			button.SetEnabled(false)
 		elseif owned then
 			button = Components.Button({
-				Text = "EQUIP",
+				Text = "Equip",
 				Color = Theme.Colors.Green,
 				OnClick = function()
 					local result = Remotes.EquipTool:InvokeServer(id)
@@ -103,7 +103,7 @@ function InventoryScreen:Refresh()
 			})
 		else
 			button = Components.Button({
-				Text = "VIEW IN SHOP",
+				Text = "View in shop",
 				Color = Theme.Colors.Blue,
 				MaxTextSize = 18,
 				OnClick = function()

@@ -114,6 +114,10 @@ function UIController.OpenWindow(name: string)
 	if UIController.Mode ~= "Lobby" then
 		return
 	end
+	if name == "Party" then
+		screens.Party:GoToPads()
+		return
+	end
 	local screen = windows[name]
 	if not screen then
 		return
@@ -123,6 +127,10 @@ function UIController.OpenWindow(name: string)
 end
 
 function UIController.ToggleWindow(name: string)
+	if name == "Party" then
+		screens.Party:GoToPads()
+		return
+	end
 	local screen = windows[name]
 	if screen and screen.Window.IsOpen() then
 		screen.Window.Close()
@@ -132,10 +140,17 @@ function UIController.ToggleWindow(name: string)
 end
 
 function UIController.OpenPartyWithLevel(levelId: string, difficultyId: string)
-	local party = screens.Party
-	party.SelectedLevel = levelId
-	party.SelectedDifficulty = difficultyId
-	UIController.OpenWindow("Party")
+	local party = Controllers.DataController.Party.MyParty
+	if party and party.HostUserId == LOCAL_PLAYER.UserId then
+		screens.Party:SetPendingLevel(levelId, difficultyId)
+		UIController.CloseWindows()
+	elseif party then
+		UIController.Toast("Only the HOST can change the level", "Error")
+	else
+		screens.Party.Pending = { LevelId = levelId, Difficulty = difficultyId }
+		UIController.CloseWindows()
+		screens.Party:GoToPads()
+	end
 end
 
 function UIController.SetQuestsVisible(visible: boolean)
@@ -151,6 +166,7 @@ local function setMode(mode: string)
 	screens.Party.Gui.Enabled = lobby
 	if not lobby then
 		UIController.CloseWindows()
+		screens.Party.Window.Close()
 	end
 	for _, name in ipairs({ "Levels", "Inventory", "Upgrades", "Shop", "Settings", "Profile" }) do
 		windows[name].Gui.Enabled = lobby
@@ -180,6 +196,9 @@ local function onDataChanged(data)
 			screen:Update(data)
 		end
 	end
+	if screens.Party.Window.IsOpen() then
+		screens.Party:RefreshSetup()
+	end
 end
 
 local function onMatchEvent(eventName: string, payload)
@@ -191,16 +210,17 @@ local function onMatchEvent(eventName: string, payload)
 		setMode("Game")
 		screens.Gameplay:Show(Controllers.DataController.Match or payload)
 		Controllers.SoundManager.Play("Countdown")
-		UIController.Announce("PEEL!", "Clean the whole object together", Theme.Colors.Pink, 1.6)
+		UIController.Announce("Peel!", "Clean the whole object together", Theme.Colors.Accent, 1.6)
 	elseif eventName == "Team" then
 		screens.Gameplay:UpdateTeam(payload.Team)
 	elseif eventName == "Complete" then
 		setMode("Results")
+		Controllers.SoundManager.PlayAmbience("ResultsMusic")
 		screens.Gameplay:StopTimer()
 		Controllers.SoundManager.Play("LevelComplete")
 		Controllers.EffectsController.Confetti(90)
 		Controllers.AnimationController.Celebrate()
-		UIController.Announce("✨ OBJECT CLEANED! ✨", payload.LevelName, Theme.Colors.Yellow, 2.4)
+		UIController.Announce("Object cleaned", payload.LevelName, Theme.Colors.Yellow, 2.4)
 		task.delay(2.6, function()
 			if UIController.Mode == "Results" then
 				screens.Gameplay:Hide()
@@ -217,9 +237,9 @@ local function onEffect(effectName: string, payload)
 	if effectName == "LevelUp" then
 		Controllers.SoundManager.Play("LevelUp")
 		Controllers.EffectsController.Confetti(60)
-		UIController.Announce("LEVEL UP!", string.format("Level %d  •  +%d 💎", payload.Level, payload.Gems), Theme.Colors.XP, 2.6)
+		UIController.Announce("Level up", string.format("Level %d  ·  +%d gems", payload.Level, payload.Gems), Theme.Colors.XP, 2.6)
 		for _, unlock in ipairs(payload.Unlocks or {}) do
-			UIController.Toast("🔓 Unlocked " .. unlock, "Success")
+			UIController.Toast("Unlocked " .. unlock, "Success")
 		end
 	elseif effectName == "RareFound" then
 		local info = StickerConfig.Get(payload.Type)
@@ -229,7 +249,7 @@ local function onEffect(effectName: string, payload)
 			Controllers.EffectsController.Flash(color, 0.25)
 			local subtitle = info.DisplayName .. "  •  +" .. Utility.FormatNumber(payload.Coins) .. " Coins"
 			if payload.Gems and payload.Gems > 0 then
-				subtitle ..= "  +" .. payload.Gems .. " 💎"
+				subtitle ..= "  +" .. payload.Gems .. " gems"
 			end
 			UIController.Announce("✨ RARE STICKER FOUND!", subtitle, color, 2.2)
 		end
@@ -266,7 +286,6 @@ function UIController.Start()
 	screens.Results = load("ResultsScreen").new(getGui("ResultsUI"), ctx)
 
 	windows = {
-		Party = screens.Party,
 		Levels = screens.Levels,
 		Inventory = screens.Inventory,
 		Upgrades = screens.Upgrades,

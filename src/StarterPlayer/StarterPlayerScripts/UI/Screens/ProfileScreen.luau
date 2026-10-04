@@ -29,7 +29,7 @@ function ProfileScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "ProfileWindow",
-		Title = "👤 PROFILE",
+		Title = "Profile",
 		Color = Theme.Colors.Cyan,
 		Size = UDim2.fromOffset(980, 600),
 		OnOpen = function()
@@ -65,7 +65,7 @@ function ProfileScreen:Refresh()
 	local needed = Progression.XPToNext(data.Level)
 	self.XPBar.Set(data.XP / needed, string.format("%s / %s XP", Utility.FormatNumber(math.floor(data.XP)), Utility.FormatNumber(needed)), false)
 
-	local rareLines = { "<font size=\"20\">✨ RARE COLLECTION</font>" }
+	local rareLines = { "<font size=\"18\">Rare collection</font>" }
 	for _, id in ipairs(StickerConfig.Order) do
 		local info = StickerConfig.Get(id)
 		if info.IsRare then
@@ -77,7 +77,7 @@ function ProfileScreen:Refresh()
 
 	local details = self.Details
 	Components.ClearChildren(details, { "UIListLayout" })
-	section(details, 1, "📊 STATISTICS")
+	section(details, 1, "Statistics")
 	local stats = data.Statistics
 	local grid = Components.Create("Frame", { Name = "Stats", Size = UDim2.new(1, -12, 0, 170), BackgroundTransparency = 1, LayoutOrder = 2, Parent = details })
 	Components.Create("UIGridLayout", { CellSize = UDim2.new(0.25, -8, 0, 78), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = grid })
@@ -97,7 +97,7 @@ function ProfileScreen:Refresh()
 		Components.Label({ Text = entry[1], Size = UDim2.new(1, -10, 0, 20), Position = UDim2.fromOffset(5, 48), Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 14, Parent = tile })
 	end
 
-	section(details, 3, "⏱ BEST TIMES")
+	section(details, 3, "Best times")
 	local table_ = Components.Frame({ Name = "BestTimes", Size = UDim2.new(1, -12, 0, 0), Color = Theme.Colors.PanelDark, Transparency = 0.2, Corner = 12, LayoutOrder = 4, Parent = details })
 	table_.AutomaticSize = Enum.AutomaticSize.Y
 	Components.Padding(table_, 8)

@@ -58,7 +58,7 @@ function LoadingScreen:Show(levelId: string, difficultyId: string, total: number
 	self.Title.Text = string.upper(level and level.Name or levelId)
 	self.Subtitle.Text = string.format("%s • %s stickers", difficulty and difficulty.DisplayName or difficultyId, Utility.FormatNumber(total or 0))
 	self.Subtitle.TextColor3 = difficulty and difficulty.Color or Theme.Colors.Text
-	self.Tip.Text = "💡 " .. TIPS[math.random(1, #TIPS)]
+	self.Tip.Text = TIPS[math.random(1, #TIPS)]
 	self.Bar.Set(0, "Building the level...", false)
 	self.Background.BackgroundTransparency = 0
 	self.Gui.Enabled = true

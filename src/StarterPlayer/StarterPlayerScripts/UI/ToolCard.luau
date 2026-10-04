@@ -27,12 +27,12 @@ end
 
 function ToolCard.StatsText(tool): string
 	local parts = {}
-	table.insert(parts, string.format("⚡ +%d%% Peel Speed", math.floor(tool.PeelSpeed * 100 + 0.5)))
+	table.insert(parts, string.format("+%d%% peel speed", math.floor(tool.PeelSpeed * 100 + 0.5)))
 	if tool.MultiPeel > 0 then
-		table.insert(parts, string.format("🖐️ +%d Multi-Peel", tool.MultiPeel))
+		table.insert(parts, string.format("+%d multi-peel", tool.MultiPeel))
 	end
 	if tool.Luck > 0 then
-		table.insert(parts, string.format("🍀 +%d%% Luck", math.floor(tool.Luck * 100 + 0.5)))
+		table.insert(parts, string.format("+%d%% luck", math.floor(tool.Luck * 100 + 0.5)))
 	end
 	table.insert(parts, "Tier " .. tool.Tier)
 	return table.concat(parts, "\n")
@@ -65,7 +65,7 @@ function ToolCard.Build(tool, props): (Frame, Frame)
 	if props.Locked then
 		viewport.ImageColor3 = Color3.fromRGB(90, 90, 100)
 	end
-	Components.Label({ Text = tool.Icon .. " " .. tool.Name, Size = UDim2.new(1, -12, 0, 24), Position = UDim2.fromOffset(6, 120), MaxTextSize = 20, Stroke = 1.5, Parent = card })
+	Components.Label({ Text = tool.Name, Size = UDim2.new(1, -12, 0, 24), Position = UDim2.fromOffset(6, 120), MaxTextSize = 20, Stroke = 1.5, Parent = card })
 	Components.Label({ Text = string.upper(tool.Rarity), Size = UDim2.new(1, -12, 0, 16), Position = UDim2.fromOffset(6, 145), Font = Theme.Fonts.Bold, Color = rarityColor, MaxTextSize = 14, Parent = card })
 	Components.Label({
 		Text = ToolCard.StatsText(tool),

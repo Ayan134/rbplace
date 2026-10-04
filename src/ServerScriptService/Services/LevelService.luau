@@ -209,6 +209,16 @@ local function buildArena(match): (Model, BasePart)
 	ground.TopSurface = Enum.SurfaceType.Smooth
 	ground.Parent = arena
 
+	-- Real grass terrain under the arena; the part stays only for sticker occlusion tests
+	local filled = pcall(function()
+		Workspace.Terrain:FillBlock(CFrame.new(origin - Vector3.new(0, 2, 0)), Vector3.new(groundSize, 4, groundSize), Enum.Material.Grass)
+	end)
+	if filled then
+		ground.Transparency = 1
+		ground.CanCollide = false
+		match.TerrainFilled = true
+	end
+
 	for _, def in ipairs({ { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } }) do
 		local wall = Instance.new("Part")
 		wall.Name = "Boundary"
@@ -293,7 +303,8 @@ local function onRewardRequested(session, player: Player?, sticker)
 	if info.Notify then
 		Notifier.Effect(player, "RareFound", { Type = sticker.Type, Coins = reward.Coins, Gems = reward.Gems })
 		for other in pairs(match.Players) do
-			if other ~= player then
+			-- With thousands of stickers only the rarest finds are announced to the team
+			if other ~= player and info.Index >= StickerConfig.Types.Rainbow.Index then
 				Notifier.Toast(other, string.format("✨ %s found a %s!", player.DisplayName, info.DisplayName), "Rare")
 			end
 		end
@@ -455,6 +466,12 @@ function endMatch(match)
 	if match.Arena then
 		match.Arena:Destroy()
 	end
+	if match.TerrainFilled then
+		local groundSize = Config.Arena.GroundSize
+		pcall(function()
+			Workspace.Terrain:FillBlock(CFrame.new(match.Origin - Vector3.new(0, 2, 0)), Vector3.new(groundSize + 8, 4, groundSize + 8), Enum.Material.Air)
+		end)
+	end
 	slots[match.Slot] = nil
 	matches[match.Id] = nil
 	LevelService.MatchEnded:Fire(match.Party, match)
@@ -518,8 +535,22 @@ local function loadMatch(match)
 	end
 
 	-- Give clients time to receive sticker chunks behind the loading screen
-	local transferTime = math.ceil(#stickers / Config.Match.ChunkSize) * 0.06
-	task.wait(Config.Match.LoadingMinTime + transferTime)
+	-- Wait behind the loading screen until every client has built its stickers
+	local loadStart = os.clock()
+	task.wait(Config.Match.LoadingMinTime)
+	while not match.Ended and os.clock() - loadStart < Config.Match.LoadTimeout do
+		local allReady = true
+		for player in pairs(match.Players) do
+			if not match.ClientReady[player] then
+				allReady = false
+				break
+			end
+		end
+		if allReady then
+			break
+		end
+		task.wait(0.2)
+	end
 	if match.Ended or next(match.Players) == nil then
 		endMatch(match)
 		return
@@ -584,6 +615,7 @@ function LevelService.StartMatch(party, members: { Player }): (boolean, string?)
 		XP = {},
 		Rare = {},
 		TeamDirty = true,
+		ClientReady = {},
 		Ended = false,
 		StartTime = 0,
 	}
@@ -763,12 +795,20 @@ function LevelService.Init()
 	buildLevelModels()
 	publishPreviews()
 	lobbyModel = LobbyBuilder.Build()
+	LobbyBuilder.Decorate(lobbyModel)
 
 	StickerService.RewardHandler = onRewardRequested
 
 	Remotes.UnlockLevel.OnServerInvoke = function(player: Player, levelId: any)
 		return LevelService.UnlockLevel(player, levelId)
 	end
+
+	Remotes.ClientReady.OnServerEvent:Connect(function(player: Player)
+		local match = playerMatch[player]
+		if match then
+			match.ClientReady[player] = true
+		end
+	end)
 
 	Remotes.LeaveMatch.OnServerEvent:Connect(function(player: Player)
 		local match = playerMatch[player]

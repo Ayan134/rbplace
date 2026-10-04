@@ -26,7 +26,7 @@ function ShopScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "ShopWindow",
-		Title = "🛒 SHOP",
+		Title = "Shop",
 		Color = Theme.Colors.Yellow,
 		Size = UDim2.fromOffset(1000, 620),
 		OnOpen = function()
@@ -35,7 +35,7 @@ function ShopScreen.new(gui: ScreenGui, ctx)
 		end,
 	})
 	local content = self.Window.Content
-	Components.Label({ Text = "TOOLS — peel faster, peel more at once, find more rares", Size = UDim2.new(1, 0, 0, 24), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 18, Parent = content })
+	Components.Label({ Text = "Tools — peel faster, peel more at once, find more rares", Size = UDim2.new(1, 0, 0, 24), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 18, Parent = content })
 	local scroll = Components.Scroll({ Name = "Tools", Size = UDim2.new(1, 0, 1, -110), Position = UDim2.fromOffset(0, 30), Direction = Enum.ScrollingDirection.X, Automatic = Enum.AutomaticSize.X, Parent = content })
 	Components.List(scroll, Enum.FillDirection.Horizontal, 12, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center)
 	Components.Padding(scroll, 6)
@@ -43,7 +43,7 @@ function ShopScreen.new(gui: ScreenGui, ctx)
 
 	local gems = Components.Frame({ Name = "Gems", Size = UDim2.new(1, 0, 0, 70), Position = UDim2.new(0, 0, 1, -70), Color = Theme.Colors.PanelDark, Transparency = 0.2, Corner = 14, Stroke = 2, StrokeColor = Theme.Colors.Gems, Parent = content })
 	Components.Label({
-		Text = "💎 GEM SHOP — trails, sticker effects, cosmetics & premium upgrades coming soon! Earn Gems from quests, level-ups, first clears and Diamond stickers.",
+		Text = "Gem shop — trails, sticker effects and cosmetics are coming soon. Earn gems from quests, level-ups, first clears and Diamond stickers.",
 		Size = UDim2.new(1, -24, 1, -12),
 		Position = UDim2.fromOffset(12, 6),
 		Font = Theme.Fonts.Bold,
@@ -79,18 +79,18 @@ function ShopScreen:Refresh()
 		local levelMet = data.Level >= tool.RequiredLevel
 		local balance = if tool.Currency == "Gems" then data.Gems else data.Coins
 		local _, buttonArea = ToolCard.Build(tool, { LayoutOrder = index, Locked = not levelMet, Size = UDim2.fromOffset(200, 330), Parent = self.Scroll })
-		local icon = if tool.Currency == "Gems" then "💎" else "🪙"
+		local icon = if tool.Currency == "Gems" then "◆" else "●"
 		local button
 		if owned then
-			button = Components.Button({ Text = "OWNED ✔", Color = Theme.Colors.Green })
+			button = Components.Button({ Text = "Owned", Color = Theme.Colors.Green })
 			button.SetEnabled(false)
 		elseif not levelMet then
-			button = Components.Button({ Text = "🔒 LEVEL " .. tool.RequiredLevel, Color = Theme.Colors.Grey })
+			button = Components.Button({ Text = "Level " .. tool.RequiredLevel, Color = Theme.Colors.Grey })
 			button.SetEnabled(false)
 		else
 			button = Components.Button({
 				Text = icon .. " " .. Utility.FormatNumber(tool.Price),
-				Color = if tool.Currency == "Gems" then Theme.Colors.Cyan else Theme.Colors.Yellow,
+				Color = Theme.Colors.Accent,
 				OnClick = function()
 					local result = Remotes.BuyTool:InvokeServer(id)
 					if result and result.Success then

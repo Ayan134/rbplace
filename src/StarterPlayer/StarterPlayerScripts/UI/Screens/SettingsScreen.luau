@@ -29,7 +29,7 @@ function SettingsScreen.new(gui: ScreenGui, ctx)
 	self.Pending = {}
 	self.Window = Components.Window(gui, {
 		Name = "SettingsWindow",
-		Title = "⚙️ SETTINGS",
+		Title = "Settings",
 		Color = Theme.Colors.Purple,
 		Size = UDim2.fromOffset(640, 520),
 		OnOpen = function()
@@ -44,8 +44,8 @@ function SettingsScreen.new(gui: ScreenGui, ctx)
 	Components.List(list, Enum.FillDirection.Vertical, 12)
 
 	self.Sliders = {}
-	self.Sliders.MusicVolume = self:BuildSlider(list, 1, "🎵 Music", "MusicVolume")
-	self.Sliders.SFXVolume = self:BuildSlider(list, 2, "🔊 Sound Effects", "SFXVolume")
+	self.Sliders.MusicVolume = self:BuildSlider(list, 1, "Music", "MusicVolume")
+	self.Sliders.SFXVolume = self:BuildSlider(list, 2, "Sound effects", "SFXVolume")
 	self.Toggles = {}
 	for index, toggle in ipairs(TOGGLES) do
 		self.Toggles[toggle.Key] = self:BuildToggle(list, 10 + index, toggle)

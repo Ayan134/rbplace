@@ -4,7 +4,6 @@
 	best time and lock / unlock state. Difficulty tabs update counts and rewards.
 ]]
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -18,8 +17,6 @@ local UI = script.Parent.Parent
 local Components = require(UI.Components)
 local Theme = require(UI.Theme)
 
-local LOCAL_PLAYER = Players.LocalPlayer
-
 local LevelSelectScreen = {}
 LevelSelectScreen.__index = LevelSelectScreen
 
@@ -30,7 +27,7 @@ function LevelSelectScreen.new(gui: ScreenGui, ctx)
 	self.Difficulty = "Normal"
 	self.Window = Components.Window(gui, {
 		Name = "LevelsWindow",
-		Title = "🗺️ LEVELS",
+		Title = "Levels",
 		Color = Theme.Colors.Blue,
 		Size = UDim2.fromOffset(1000, 640),
 		OnOpen = function()
@@ -66,29 +63,6 @@ function LevelSelectScreen.new(gui: ScreenGui, ctx)
 end
 
 function LevelSelectScreen:Select(levelId: string)
-	local controllers = self.Ctx.Controllers
-	local party = controllers.DataController.Party.MyParty
-	if party and party.HostUserId == LOCAL_PLAYER.UserId then
-		task.spawn(function()
-			local result = Remotes.PartyAction:InvokeServer("SetLevel", levelId)
-			if result and not result.Success then
-				self.Ctx.UI.Toast(result.Message, "Error")
-				return
-			end
-			if party.Difficulty ~= self.Difficulty then
-				local diffResult = Remotes.PartyAction:InvokeServer("SetDifficulty", self.Difficulty)
-				if diffResult and not diffResult.Success then
-					self.Ctx.UI.Toast(diffResult.Message, "Error")
-				end
-			end
-		end)
-		self.Window.Close()
-		return
-	end
-	if party then
-		self.Ctx.UI.Toast("Only the HOST can change the level", "Error")
-		return
-	end
 	self.Ctx.UI.OpenPartyWithLevel(levelId, self.Difficulty)
 end
 
@@ -158,13 +132,13 @@ function LevelSelectScreen:Refresh()
 
 		local button
 		if unlocked then
-			button = Components.Button({ Text = "SELECT", Color = Theme.Colors.Green, OnClick = function()
+			button = Components.Button({ Text = "Select", Color = Theme.Colors.Green, OnClick = function()
 				self:Select(level.LevelId)
 			end })
 		elseif levelMet then
 			button = Components.Button({
-				Text = "UNLOCK 🪙 " .. Utility.FormatNumber(level.UnlockCost),
-				Color = Theme.Colors.Yellow,
+				Text = "Unlock  ● " .. Utility.FormatNumber(level.UnlockCost),
+				Color = Theme.Colors.Accent,
 				OnClick = function()
 					local result = Remotes.UnlockLevel:InvokeServer(level.LevelId)
 					if result and result.Success then
@@ -180,7 +154,7 @@ function LevelSelectScreen:Refresh()
 			})
 			button.SetEnabled(data.Coins >= level.UnlockCost)
 		else
-			button = Components.Button({ Text = "🔒 LEVEL " .. level.RequiredLevel, Color = Theme.Colors.Grey })
+			button = Components.Button({ Text = "Level " .. level.RequiredLevel, Color = Theme.Colors.Grey })
 			button.SetEnabled(false)
 		end
 		button.Instance.Size = UDim2.new(1, -20, 0, 50)

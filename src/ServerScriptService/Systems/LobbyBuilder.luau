@@ -52,12 +52,13 @@ local function signText(target: BasePart, face: Enum.NormalId, text: string, col
 	label.BackgroundColor3 = background or Color3.new()
 	label.Text = text
 	label.TextScaled = true
-	label.Font = Enum.Font.FredokaOne
+	label.Font = Enum.Font.GothamBold
 	label.TextColor3 = color
 	label.Parent = gui
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 3
-	stroke.Color = Color3.fromRGB(40, 30, 60)
+	stroke.Thickness = 1
+	stroke.Transparency = 0.6
+	stroke.Color = Color3.fromRGB(0, 0, 0)
 	stroke.Parent = label
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0.05, 0)
@@ -195,12 +196,12 @@ function LobbyBuilder.Build()
 	spawnDecal.Parent = spawn
 
 	-- Title sign
-	local signFrame = part(lobby, { Name = "TitleFrame", Size = Vector3.new(58, 16, 2), CFrame = CFrame.new(0, 22, -64), Color = Color3.fromRGB(255, 100, 170) })
-	local sign = part(lobby, { Name = "TitleSign", Size = Vector3.new(55, 13, 0.4), CFrame = CFrame.new(0, 22, -65.1), Color = Color3.fromRGB(60, 40, 110) })
+	local signFrame = part(lobby, { Name = "TitleFrame", Size = Vector3.new(58, 16, 2), CFrame = CFrame.new(0, 26, -122), Color = Color3.fromRGB(255, 100, 170) })
+	local sign = part(lobby, { Name = "TitleSign", Size = Vector3.new(55, 13, 0.4), CFrame = CFrame.new(0, 26, -123.1), Color = Color3.fromRGB(60, 40, 110) })
 	signText(sign, Enum.NormalId.Back, "STICKER PEEL", Color3.fromRGB(255, 230, 90))
 	signText(sign, Enum.NormalId.Front, "STICKER PEEL", Color3.fromRGB(255, 230, 90))
 	for _, x in ipairs({ -24, 24 }) do
-		part(lobby, { Name = "SignLeg", Size = Vector3.new(2, 15, 2), CFrame = CFrame.new(x, 7.5, -64), Color = Color3.fromRGB(80, 60, 130), Material = Enum.Material.Metal })
+		part(lobby, { Name = "SignLeg", Size = Vector3.new(2, 19, 2), CFrame = CFrame.new(x, 9.5, -122), Color = Color3.fromRGB(80, 60, 130), Material = Enum.Material.Metal })
 	end
 	-- Decorative giant stickers on the sign frame
 	local stickerColors = { Color3.fromRGB(255, 220, 70), Color3.fromRGB(90, 220, 255), Color3.fromRGB(140, 255, 120), Color3.fromRGB(255, 140, 70) }
@@ -215,33 +216,83 @@ function LobbyBuilder.Build()
 		})
 	end
 
-	-- Play portal
-	local portal = Instance.new("Model")
-	portal.Name = "PlayPortal"
-	portal.Parent = lobby
-	local portalCF = CFrame.new(0, 0, -50)
-	for i = 0, 12 do
-		local angle = math.pi * i / 12
-		part(portal, {
-			Name = "Arch",
-			Size = Vector3.new(2.4, 3.2, 2.4),
-			CFrame = portalCF * CFrame.new(math.cos(angle) * 10, 1.4 + math.sin(angle) * 12, 0),
-			Color = if i % 2 == 0 then Color3.fromRGB(120, 80, 255) else Color3.fromRGB(255, 100, 200),
-			Material = Enum.Material.Neon,
-		})
+	-- Room circles: step into a circle to create or join a room
+	local rooms = Instance.new("Model")
+	rooms.Name = "RoomPads"
+	rooms.Parent = lobby
+	part(rooms, { Name = "RoomsFloor", Size = Vector3.new(100, 0.4, 34), CFrame = CFrame.new(0, 0.15, -88), Color = Color3.fromRGB(232, 228, 222), Material = Enum.Material.Pavement })
+	for index, x in ipairs({ -33, -11, 11, 33 }) do
+		local pad = Instance.new("Model")
+		pad.Name = "Pad" .. index
+		pad:SetAttribute("PadIndex", index)
+		pad.Parent = rooms
+		local center = Vector3.new(x, 0, -88)
+		local ringSize, ringCF = vcyl(center + Vector3.new(0, 0.45, 0), 0.3, 15)
+		part(pad, { Name = "Ring", Size = ringSize, CFrame = ringCF, Color = Color3.fromRGB(255, 255, 255), Material = Enum.Material.Neon, CanCollide = false })
+		local discSize, discCF = vcyl(center + Vector3.new(0, 0.5, 0), 0.32, 13.6)
+		local disc = part(pad, { Name = "Disc", Size = discSize, CFrame = discCF, Color = Color3.fromRGB(46, 48, 58), Material = Enum.Material.SmoothPlastic })
+		-- Big number painted on the floor
+		local numberGui = Instance.new("SurfaceGui")
+		numberGui.Face = Enum.NormalId.Right
+		numberGui.PixelsPerStud = 20
+		numberGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		numberGui.LightInfluence = 0.3
+		numberGui.Parent = disc
+		local numberLabel = Instance.new("TextLabel")
+		numberLabel.Size = UDim2.fromScale(0.5, 0.5)
+		numberLabel.Position = UDim2.fromScale(0.5, 0.5)
+		numberLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+		numberLabel.BackgroundTransparency = 1
+		numberLabel.Text = tostring(index)
+		numberLabel.TextScaled = true
+		numberLabel.Font = Enum.Font.GothamBold
+		numberLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		numberLabel.TextTransparency = 0.75
+		numberLabel.Parent = numberGui
+		-- Floating status sign (text is updated by PartyService)
+		local anchor = part(pad, { Name = "SignAnchor", Size = Vector3.new(1, 1, 1), CFrame = CFrame.new(center + Vector3.new(0, 9, 0)), Transparency = 1, CanCollide = false })
+		anchor.CanQuery = false
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "RoomSign"
+		billboard.Size = UDim2.fromOffset(240, 78)
+		billboard.LightInfluence = 0
+		billboard.MaxDistance = 140
+		billboard.Parent = anchor
+		local panel = Instance.new("Frame")
+		panel.Name = "Panel"
+		panel.Size = UDim2.fromScale(1, 1)
+		panel.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+		panel.BackgroundTransparency = 0.25
+		panel.Parent = billboard
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 12)
+		corner.Parent = panel
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.Size = UDim2.new(1, -20, 0, 32)
+		title.Position = UDim2.fromOffset(10, 6)
+		title.BackgroundTransparency = 1
+		title.Font = Enum.Font.GothamBold
+		title.TextScaled = true
+		title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		title.Text = "ROOM " .. index
+		title.Parent = panel
+		local status = Instance.new("TextLabel")
+		status.Name = "Status"
+		status.Size = UDim2.new(1, -20, 0, 26)
+		status.Position = UDim2.fromOffset(10, 42)
+		status.BackgroundTransparency = 1
+		status.Font = Enum.Font.GothamMedium
+		status.TextScaled = true
+		status.TextColor3 = Color3.fromRGB(190, 190, 200)
+		status.Text = "Step in to create"
+		status.Parent = panel
 	end
-	local swirl = part(portal, { Name = "Swirl", Size = Vector3.new(0.4, 22, 18), CFrame = portalCF * CFrame.new(0, 7, 0) * CFrame.Angles(0, math.rad(90), 0), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(160, 120, 255), Material = Enum.Material.ForceField, CanCollide = false })
-	swirl.Transparency = 0.2
-	local portalPrompt = Instance.new("ProximityPrompt")
-	portalPrompt.ObjectText = "PLAY"
-	portalPrompt.ActionText = "Create / Join Room"
-	portalPrompt.KeyboardKeyCode = Enum.KeyCode.F
-	portalPrompt.MaxActivationDistance = 14
-	portalPrompt.RequiresLineOfSight = false
-	portalPrompt:SetAttribute("OpenUI", "Party")
-	portalPrompt.Parent = swirl
-	local portalSign = part(portal, { Name = "PortalSign", Size = Vector3.new(14, 3.4, 0.4), CFrame = portalCF * CFrame.new(0, 16.4, 0.6), Color = Color3.fromRGB(80, 50, 160) })
-	signText(portalSign, Enum.NormalId.Back, "▶ PLAY", Color3.fromRGB(255, 255, 255))
+	local roomsSign = part(rooms, { Name = "RoomsSign", Size = Vector3.new(30, 4, 0.4), CFrame = CFrame.new(0, 3.6, -103), Color = Color3.fromRGB(28, 28, 34) })
+	signText(roomsSign, Enum.NormalId.Back, "PLAY  •  STEP INTO A CIRCLE", Color3.fromRGB(255, 255, 255))
+	for _, x in ipairs({ -13, 13 }) do
+		part(rooms, { Name = "SignLeg", Size = Vector3.new(0.6, 2, 0.6), CFrame = CFrame.new(x, 1, -103), Color = Color3.fromRGB(28, 28, 34), Material = Enum.Material.Metal })
+	end
 
 	-- Kiosks around the plaza
 	kiosk(lobby, CFrame.new(-36, 0, -24) * CFrame.Angles(0, math.rad(-150), 0), "LEVELS", Color3.fromRGB(70, 170, 255), "Levels", "Choose Level")
@@ -265,6 +316,31 @@ function LobbyBuilder.Build()
 
 	lobby.Parent = Workspace
 	return lobby
+end
+
+-- Runtime-only polish (terrain can't be stored by the build tools): real grass terrain
+-- under the lobby and soft clouds in the sky.
+function LobbyBuilder.Decorate(lobby: Model)
+	local terrain = Workspace.Terrain
+	local ok = pcall(function()
+		terrain:FillBlock(CFrame.new(0, -2, 0), Vector3.new(320, 4, 320), Enum.Material.Grass)
+	end)
+	local ground = lobby:FindFirstChild("Ground")
+	if ok and ground and ground:IsA("BasePart") then
+		-- Terrain takes over walking; the part stays for sticker occlusion tests only
+		ground.Transparency = 1
+		ground.CanCollide = false
+	end
+	if not terrain:FindFirstChildOfClass("Clouds") then
+		local clouds = Instance.new("Clouds")
+		clouds.Cover = 0.55
+		clouds.Density = 0.55
+		clouds.Color = Color3.fromRGB(255, 255, 255)
+		clouds.Parent = terrain
+	end
+	pcall(function()
+		(terrain :: any).Decoration = true
+	end)
 end
 
 return LobbyBuilder

@@ -449,7 +449,7 @@ function StickerGenerator.Generate(model: Model, options)
 			SizeX = sizeX,
 			SizeZ = sizeZ,
 			Health = health,
-			ColorIndex = rng:NextInteger(1, #StickerConfig.Palette),
+			ColorIndex = rng:NextInteger(1, StickerConfig.VariantCount), -- color + artwork variant
 			Circle = circle,
 			Hard = hard,
 			Layer = if info.IsRare then 9 else rng:NextInteger(0, 7),

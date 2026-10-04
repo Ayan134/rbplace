@@ -63,12 +63,6 @@
         "UnlockLevel": {
           "$className": "RemoteFunction"
         },
-        "CreateParty": {
-          "$className": "RemoteFunction"
-        },
-        "JoinParty": {
-          "$className": "RemoteFunction"
-        },
         "StartParty": {
           "$className": "RemoteFunction"
         },
@@ -76,6 +70,12 @@
           "$className": "RemoteFunction"
         },
         "ClaimQuest": {
+          "$className": "RemoteFunction"
+        },
+        "ClientReady": {
+          "$className": "RemoteEvent"
+        },
+        "ConfigureRoom": {
           "$className": "RemoteFunction"
         }
       }
@@ -135,8 +135,8 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 14.5,
-        "Brightness": 2.6,
+        "ClockTime": 15,
+        "Brightness": 3,
         "GlobalShadows": true,
         "Ambient": [
           0.36,
@@ -148,14 +148,15 @@
           0.55,
           0.6
         ],
-        "EnvironmentDiffuseScale": 0.6,
-        "EnvironmentSpecularScale": 0.6,
-        "ExposureCompensation": 0.1
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1,
+        "ExposureCompensation": 0,
+        "ShadowSoftness": 0.25
       },
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.28,
+          "Density": 0.3,
           "Offset": 0.2,
           "Color": [
             0.78,
@@ -167,24 +168,29 @@
             0.62,
             0.8
           ],
-          "Glare": 0.15,
-          "Haze": 1.2
+          "Glare": 0.25,
+          "Haze": 1.4
         }
       },
       "Bloom": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.6,
-          "Size": 28,
-          "Threshold": 1.4
+          "Intensity": 0.35,
+          "Size": 24,
+          "Threshold": 1.6
         }
       },
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Brightness": 0.02,
-          "Contrast": 0.08,
-          "Saturation": 0.18
+          "Brightness": 0.01,
+          "Contrast": 0.06,
+          "Saturation": 0.12,
+          "TintColor": [
+            1,
+            0.99,
+            0.97
+          ]
         }
       },
       "SunRays": {
@@ -200,6 +206,19 @@
       "$properties": {
         "Gravity": 196.2,
         "StreamingEnabled": false
+      },
+      "Terrain": {
+        "$className": "Terrain",
+        "$properties": {
+          "Decoration": true,
+          "WaterColor": [
+            0.3,
+            0.62,
+            0.85
+          ],
+          "WaterTransparency": 0.6,
+          "WaterWaveSize": 0.1
+        }
       }
     }
   }

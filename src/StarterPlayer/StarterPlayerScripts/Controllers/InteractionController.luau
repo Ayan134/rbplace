@@ -246,14 +246,14 @@ local function buildPrompt()
 	local row = Instance.new("Frame")
 	row.Name = "Row"
 	row.Size = UDim2.new(1, 0, 0, 44)
-	row.BackgroundColor3 = Color3.fromRGB(30, 24, 54)
+	row.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 	row.BackgroundTransparency = 0.1
 	row.Parent = prompt
 	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.fromRGB(255, 255, 255)
-	stroke.Transparency = 0.6
-	stroke.Thickness = 2
+	stroke.Transparency = 0.9
+	stroke.Thickness = 1
 	stroke.Parent = row
 
 	local key = Instance.new("TextLabel")
@@ -261,9 +261,9 @@ local function buildPrompt()
 	key.Size = UDim2.fromOffset(52, 34)
 	key.Position = UDim2.fromOffset(5, 5)
 	key.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	key.Font = Enum.Font.FredokaOne
+	key.Font = Enum.Font.GothamBold
 	key.TextScaled = true
-	key.TextColor3 = Color3.fromRGB(30, 24, 54)
+	key.TextColor3 = Color3.fromRGB(18, 18, 22)
 	key.Parent = row
 	Instance.new("UICorner", key).CornerRadius = UDim.new(0, 8)
 	local keyPadding = Instance.new("UIPadding")
@@ -277,7 +277,7 @@ local function buildPrompt()
 	action.Size = UDim2.new(1, -68, 1, -10)
 	action.Position = UDim2.fromOffset(64, 5)
 	action.BackgroundTransparency = 1
-	action.Font = Enum.Font.FredokaOne
+	action.Font = Enum.Font.GothamBold
 	action.TextScaled = true
 	action.TextXAlignment = Enum.TextXAlignment.Left
 	action.TextColor3 = Color3.new(1, 1, 1)

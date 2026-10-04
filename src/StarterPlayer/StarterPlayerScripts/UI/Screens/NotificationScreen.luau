@@ -50,8 +50,8 @@ function NotificationScreen.new(gui: ScreenGui, ctx)
 		Visible = false,
 		Parent = gui,
 	})
-	self.AnnounceTitle = Components.Label({ Text = "", Size = UDim2.new(1, 0, 0, 90), MaxTextSize = 80, Stroke = 4, Parent = self.Announcement })
-	self.AnnounceSubtitle = Components.Label({ Text = "", Size = UDim2.new(1, 0, 0, 40), Position = UDim2.fromOffset(0, 92), Font = Theme.Fonts.Bold, MaxTextSize = 30, Stroke = 2.5, Parent = self.Announcement })
+	self.AnnounceTitle = Components.Label({ Text = "", Size = UDim2.new(1, 0, 0, 70), MaxTextSize = 54, Stroke = 1, Parent = self.Announcement })
+	self.AnnounceSubtitle = Components.Label({ Text = "", Size = UDim2.new(1, 0, 0, 30), Position = UDim2.fromOffset(0, 74), Font = Theme.Fonts.Bold, MaxTextSize = 20, Stroke = 1, Parent = self.Announcement })
 	Components.Create("UIScale", { Parent = self.Announcement })
 	self.AnnounceToken = 0
 

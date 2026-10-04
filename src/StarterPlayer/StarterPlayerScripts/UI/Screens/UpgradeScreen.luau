@@ -24,7 +24,7 @@ function UpgradeScreen.new(gui: ScreenGui, ctx)
 	self.Ctx = ctx
 	self.Window = Components.Window(gui, {
 		Name = "UpgradeWindow",
-		Title = "⬆️ UPGRADES",
+		Title = "Upgrades",
 		Color = Theme.Colors.Orange,
 		Size = UDim2.fromOffset(860, 600),
 		OnOpen = function()
@@ -74,15 +74,15 @@ function UpgradeScreen:Refresh()
 
 		local button
 		if maxed then
-			button = Components.Button({ Text = "MAXED ✔", Color = Theme.Colors.Green })
+			button = Components.Button({ Text = "Maxed", Color = Theme.Colors.Green })
 			button.SetEnabled(false)
 		elseif data.Level < required then
-			button = Components.Button({ Text = "🔒 LEVEL " .. required, Color = Theme.Colors.Grey })
+			button = Components.Button({ Text = "Level " .. required, Color = Theme.Colors.Grey })
 			button.SetEnabled(false)
 		else
 			button = Components.Button({
-				Text = "🪙 " .. Utility.FormatNumber(cost),
-				Color = Theme.Colors.Yellow,
+				Text = "● " .. Utility.FormatNumber(cost),
+				Color = Theme.Colors.Accent,
 				OnClick = function()
 					local result = Remotes.BuyUpgrade:InvokeServer(id)
 					if result and result.Success then

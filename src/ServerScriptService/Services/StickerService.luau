@@ -30,7 +30,6 @@ local Signal = require(Shared.Signal)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local PlayerDataService = require(script.Parent.PlayerDataService)
-local ToolService = require(script.Parent.ToolService)
 local RateLimiter = require(script.Parent.Parent.Systems.RateLimiter)
 
 local StickerService = {}
@@ -311,9 +310,6 @@ local function handleStart(player: Player, session: Session, sticker)
 	sticker.PeelStartProgress = sticker.Progress
 	active[sticker.Id] = true
 	queue(session, { "S", sticker.Id, player.UserId, remaining, sticker.Progress })
-	if activeCount == 0 then
-		ToolService.PlayPeelAnimation(player)
-	end
 	return
 end
 

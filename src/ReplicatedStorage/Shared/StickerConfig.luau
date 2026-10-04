@@ -65,7 +65,7 @@ StickerConfig.Types = {
 		Index = 4,
 		DisplayName = "Rare Sticker",
 		Rarity = "Rare",
-		Weight = 2.6,
+		Weight = 1.5,
 		IsRare = true,
 		SizeMultiplier = 1.05,
 		Health = 3.0,
@@ -81,7 +81,7 @@ StickerConfig.Types = {
 		Index = 5,
 		DisplayName = "GOLDEN STICKER",
 		Rarity = "Epic",
-		Weight = 0.9,
+		Weight = 0.4,
 		IsRare = true,
 		SizeMultiplier = 1.1,
 		Health = 4.0,
@@ -98,7 +98,7 @@ StickerConfig.Types = {
 		Index = 6,
 		DisplayName = "RAINBOW STICKER",
 		Rarity = "Legendary",
-		Weight = 0.32,
+		Weight = 0.13,
 		IsRare = true,
 		SizeMultiplier = 1.15,
 		Health = 5.0,
@@ -116,7 +116,7 @@ StickerConfig.Types = {
 		Index = 7,
 		DisplayName = "DIAMOND STICKER",
 		Rarity = "Mythic",
-		Weight = 0.09,
+		Weight = 0.035,
 		IsRare = true,
 		SizeMultiplier = 1.15,
 		Health = 7.0,
@@ -135,7 +135,7 @@ StickerConfig.Types = {
 		Index = 8,
 		DisplayName = "LEGENDARY STICKER",
 		Rarity = "Mythic",
-		Weight = 0.035,
+		Weight = 0.012,
 		IsRare = true,
 		SizeMultiplier = 1.25,
 		Health = 9.0,
@@ -153,19 +153,51 @@ StickerConfig.Types = {
 
 -- Palette for regular stickers (index is replicated, so only append to this list)
 StickerConfig.Palette = {
-	Color3.fromRGB(255, 92, 120),
-	Color3.fromRGB(255, 160, 64),
-	Color3.fromRGB(255, 220, 72),
-	Color3.fromRGB(120, 224, 96),
-	Color3.fromRGB(64, 200, 200),
-	Color3.fromRGB(72, 150, 255),
-	Color3.fromRGB(160, 110, 255),
-	Color3.fromRGB(255, 120, 220),
-	Color3.fromRGB(250, 250, 250),
-	Color3.fromRGB(40, 44, 60),
-	Color3.fromRGB(255, 130, 96),
-	Color3.fromRGB(140, 230, 210),
+	Color3.fromRGB(255, 255, 255),
+	Color3.fromRGB(255, 214, 224),
+	Color3.fromRGB(255, 232, 196),
+	Color3.fromRGB(255, 246, 190),
+	Color3.fromRGB(208, 244, 204),
+	Color3.fromRGB(196, 238, 236),
+	Color3.fromRGB(204, 224, 255),
+	Color3.fromRGB(226, 212, 255),
+	Color3.fromRGB(255, 208, 240),
+	Color3.fromRGB(70, 74, 92),
+	Color3.fromRGB(255, 160, 150),
+	Color3.fromRGB(150, 210, 255),
 }
+
+--[[
+	Sticker artwork.
+	Every sticker shows a picture. By default pictures are emoji glyphs, which Roblox
+	renders with its built-in emoji font - no uploaded assets needed.
+
+	To use real image stickers, put image asset ids in `Images`
+	(e.g. "rbxassetid://1234567890" - use the IMAGE id, not the decal id; in Studio paste
+	the decal into a Decal.Texture and copy the resulting id). When `Images` is not empty,
+	regular stickers use them instead of emoji.
+]]
+StickerConfig.Designs = {
+	"😀", "😎", "🥳", "😍", "🤩", "😺", "🐶", "🦊", "🐼", "🐸", "🐙", "🦄",
+	"🐝", "🦋", "🌈", "⭐", "❤️", "💜", "💙", "💚", "🍕", "🍩", "🍉", "🍓",
+	"🍒", "🍦", "🚀", "⚡", "🔥", "🎈", "🎮", "👾", "🌸", "🌻", "🍀", "🎵",
+}
+
+StickerConfig.Images = {
+	-- "rbxassetid://...",
+}
+
+-- Special stickers always use their own artwork
+StickerConfig.SpecialDesigns = {
+	Rare = "💫",
+	Golden = "🏆",
+	Rainbow = "🌈",
+	Diamond = "💎",
+	Legendary = "👑",
+}
+
+-- Distinct (paper color, artwork) combinations; replicated as one byte, so <= 255.
+StickerConfig.VariantCount = 252
 
 local byIndex = {}
 for _, id in ipairs(StickerConfig.Order) do
@@ -193,11 +225,27 @@ function StickerConfig.GetRequiredToolTier(typeId: string, difficulty): number
 	return required
 end
 
-function StickerConfig.GetColor(info, colorIndex: number): Color3
+function StickerConfig.GetColor(info, variant: number): Color3
 	if info.Color then
 		return info.Color
 	end
-	return StickerConfig.Palette[((colorIndex - 1) % #StickerConfig.Palette) + 1]
+	-- Artwork cycles fastest, paper color changes every #Designs variants
+	local palette = StickerConfig.Palette
+	return palette[(math.floor((variant - 1) / #StickerConfig.Designs) % #palette) + 1]
+end
+
+-- Returns kind ("Emoji" | "Image") and the content for a sticker variant.
+function StickerConfig.GetDesign(info, variant: number): (string, string)
+	local special = StickerConfig.SpecialDesigns[info.Id]
+	if special then
+		return "Emoji", special
+	end
+	local images = StickerConfig.Images
+	if #images > 0 then
+		return "Image", images[((variant - 1) % #images) + 1]
+	end
+	local designs = StickerConfig.Designs
+	return "Emoji", designs[((variant - 1) % #designs) + 1]
 end
 
 return StickerConfig
