@@ -25,7 +25,8 @@ local LOCAL_PLAYER = Players.LocalPlayer
 local PartyScreen = {}
 PartyScreen.__index = PartyScreen
 
-local PADS_VIEW = CFrame.lookAt(Vector3.new(0, 4, -64), Vector3.new(0, 4, -100))
+-- Standing on the path next to the four room circles in the lobby yard
+local PADS_VIEW = CFrame.lookAt(Vector3.new(-22, 4, 14), Vector3.new(-41, 4, 11))
 
 local function sectionLabel(parent: Instance, text: string, y: number)
 	Components.Label({ Text = text, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.fromOffset(0, y), XAlign = Enum.TextXAlignment.Left, Font = Theme.Fonts.Bold, Color = Theme.Colors.TextDim, MaxTextSize = 14, Parent = parent })

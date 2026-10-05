@@ -42,7 +42,15 @@ function Decor.Part(parent: Instance, props): BasePart
 	part.Reflectance = props.Reflectance or 0
 	part.Anchored = true
 	part.CanCollide = if props.CanCollide == nil then true else props.CanCollide
-	part.CastShadow = if props.CastShadow == nil then true else props.CastShadow
+	-- Scenery never needs touch events, and non-solid details stay out of spatial queries
+	part.CanTouch = false
+	if not part.CanCollide then
+		part.CanQuery = false
+	end
+	-- Tiny details (flowers, bulbs, rivets) cast no shadows: invisible at that size, not free
+	local size = props.Size
+	local tiny = math.max(size.X, size.Y, size.Z) < 1.2
+	part.CastShadow = if props.CastShadow ~= nil then props.CastShadow else not tiny
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	part.Parent = parent
@@ -62,12 +70,17 @@ local function pick(rng: Random?, list)
 	return list[1]
 end
 
-local function light(parent: Instance, range: number, brightness: number, color: Color3?)
+-- Lights are tagged Night so the client only switches them on at dusk / night
+-- (they cost rendering time and are invisible in daylight anyway).
+local function light(parent: Instance, range: number, brightness: number, color: Color3?, alwaysOn: boolean?)
 	local pointLight = Instance.new("PointLight")
 	pointLight.Range = range
 	pointLight.Brightness = brightness
 	pointLight.Color = color or WARM_LIGHT
 	pointLight.Shadows = false
+	if not alwaysOn then
+		pointLight:SetAttribute("Night", true)
+	end
 	pointLight.Parent = parent
 	return pointLight
 end
@@ -158,8 +171,8 @@ function Decor.Rock(parent: Instance, position: Vector3, size: number, rng: Rand
 		Name = "Rock",
 		Size = Vector3.new(size, size * 0.6, size * 0.8),
 		CFrame = CFrame.new(position + Vector3.new(0, size * 0.2, 0)) * CFrame.Angles(r:NextNumber(-0.3, 0.3), r:NextNumber(0, 6.28), r:NextNumber(-0.3, 0.3)),
-		Color = Color3.fromRGB(150, 150, 156),
-		Material = Enum.Material.Slate,
+		Color = Color3.fromRGB(140, 138, 134),
+		Material = Enum.Material.Rock,
 	})
 	rock:SetAttribute("AssetKind", "Rock")
 	return rock
@@ -622,7 +635,7 @@ function Decor.HotAirBalloon(parent: Instance, position: Vector3, color: Color3,
 		P(model, { Name = "Rope", Size = Vector3.new(0.12, 0.12, (to - from).Magnitude), CFrame = CFrame.lookAt((from + to) / 2, to), Color = Color3.fromRGB(80, 60, 40), CanCollide = false, CastShadow = false })
 	end
 	local flame = P(model, { Name = "Burner", Size = Vector3.new(1, 1.2, 1), CFrame = CFrame.new(position - Vector3.new(0, 13.5, 0)), Shape = Enum.PartType.Ball, Color = Color3.fromRGB(255, 170, 60), Material = Enum.Material.Neon, CanCollide = false, CastShadow = false })
-	light(flame, 12, 1.5, Color3.fromRGB(255, 170, 80))
+	light(flame, 12, 1.5, Color3.fromRGB(255, 170, 80), true)
 	return model
 end
 
@@ -752,6 +765,13 @@ function Decor.Building(parent: Instance, cframe: CFrame, size: Vector3, color: 
 	local trim = options.TrimColor or Color3.fromRGB(245, 240, 232)
 	local glass = options.WindowColor or Color3.fromRGB(150, 200, 235)
 	P(model, { Name = "Walls", Size = size, CFrame = cframe * CFrame.new(0, size.Y / 2, 0), Color = color, Material = Enum.Material.Plaster })
+	-- Stone foundation and corner trims give the box some depth
+	P(model, { Name = "Foundation", Size = Vector3.new(size.X + 0.6, 1.2, size.Z + 0.6), CFrame = cframe * CFrame.new(0, 0.6, 0), Color = Color3.fromRGB(150, 146, 140), Material = Enum.Material.Cobblestone })
+	for _, x in ipairs({ -1, 1 }) do
+		for _, z in ipairs({ -1, 1 }) do
+			P(model, { Name = "CornerTrim", Size = Vector3.new(0.7, size.Y, 0.7), CFrame = cframe * CFrame.new(x * size.X / 2, size.Y / 2, z * size.Z / 2), Color = options.TrimColor or Color3.fromRGB(245, 240, 232) })
+		end
+	end
 	local floors = options.Floors or math.max(1, math.floor(size.Y / 7))
 	local floorHeight = size.Y / floors
 	for floor = 1, floors do
@@ -773,8 +793,8 @@ function Decor.Building(parent: Instance, cframe: CFrame, size: Vector3, color: 
 	if options.Roof == "Gable" then
 		local roofColor = options.RoofColor or Color3.fromRGB(176, 80, 66)
 		local half = size.Z / 2 + 0.6
-		P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(size.X + 1.2, size.Z * 0.35, half), CFrame = cframe * CFrame.new(0, size.Y + 0.8 + size.Z * 0.175, -half / 2), Color = roofColor, Material = Enum.Material.Slate })
-		P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(size.X + 1.2, size.Z * 0.35, half), CFrame = cframe * CFrame.new(0, size.Y + 0.8 + size.Z * 0.175, half / 2) * CFrame.Angles(0, math.pi, 0), Color = roofColor, Material = Enum.Material.Slate })
+		P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(size.X + 1.2, size.Z * 0.35, half), CFrame = cframe * CFrame.new(0, size.Y + 0.8 + size.Z * 0.175, -half / 2), Color = roofColor, Material = Enum.Material.RoofShingles })
+		P(model, { Name = "Roof", Class = "WedgePart", Size = Vector3.new(size.X + 1.2, size.Z * 0.35, half), CFrame = cframe * CFrame.new(0, size.Y + 0.8 + size.Z * 0.175, half / 2) * CFrame.Angles(0, math.pi, 0), Color = roofColor, Material = Enum.Material.RoofShingles })
 	end
 	if options.Door ~= false then
 		P(model, { Name = "Door", Size = Vector3.new(3, 5.5, 0.3), CFrame = cframe * CFrame.new(0, 2.75, -size.Z / 2 - 0.1), Color = options.DoorColor or Color3.fromRGB(110, 70, 46), Material = Enum.Material.Wood, CanCollide = false })
@@ -834,6 +854,7 @@ function Decor.Spotlight(parent: Instance, position: Vector3, target: Vector3, c
 	spot.Range = 60
 	spot.Brightness = 3
 	spot.Color = color or Color3.fromRGB(255, 250, 230)
+	spot:SetAttribute("Night", true)
 	spot.Parent = lens
 	return lamp
 end

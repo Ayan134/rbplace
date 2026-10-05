@@ -151,69 +151,88 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 15,
-        "Brightness": 3,
+        "ClockTime": 14.3,
+        "Brightness": 2.9,
         "GlobalShadows": true,
         "Ambient": [
-          0.36,
-          0.36,
-          0.42
+          0.227,
+          0.235,
+          0.29
         ],
         "OutdoorAmbient": [
-          0.55,
-          0.55,
-          0.6
+          0.439,
+          0.463,
+          0.533
         ],
-        "EnvironmentDiffuseScale": 1,
+        "EnvironmentDiffuseScale": 0.65,
         "EnvironmentSpecularScale": 1,
-        "ExposureCompensation": 0,
-        "ShadowSoftness": 0.25
+        "ExposureCompensation": 0.1,
+        "ShadowSoftness": 0.12,
+        "GeographicLatitude": 38
       },
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.3,
-          "Offset": 0.2,
+          "Density": 0.33,
+          "Offset": 0.18,
           "Color": [
             0.78,
-            0.86,
-            0.96
+            0.855,
+            0.957
           ],
           "Decay": [
-            0.55,
-            0.62,
-            0.8
+            0.408,
+            0.502,
+            0.69
           ],
-          "Glare": 0.25,
-          "Haze": 1.4
+          "Glare": 0.4,
+          "Haze": 1.7
         }
       },
       "Bloom": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.35,
-          "Size": 24,
-          "Threshold": 1.6
+          "Intensity": 0.55,
+          "Size": 26,
+          "Threshold": 1.25
         }
       },
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Brightness": 0.01,
-          "Contrast": 0.06,
-          "Saturation": 0.12,
+          "Brightness": 0,
+          "Contrast": 0.15,
+          "Saturation": 0.2,
           "TintColor": [
-            1,
-            0.99,
-            0.97
+            1.0,
+            0.98,
+            0.949
           ]
         }
       },
       "SunRays": {
         "$className": "SunRaysEffect",
         "$properties": {
-          "Intensity": 0.06,
-          "Spread": 0.8
+          "Intensity": 0.1,
+          "Spread": 0.65
+        }
+      },
+      "DepthOfField": {
+        "$className": "DepthOfFieldEffect",
+        "$properties": {
+          "FarIntensity": 0.12,
+          "FocusDistance": 40,
+          "InFocusRadius": 80,
+          "NearIntensity": 0
+        }
+      },
+      "Sky": {
+        "$className": "Sky",
+        "$properties": {
+          "SunAngularSize": 13,
+          "MoonAngularSize": 9,
+          "StarCount": 3000,
+          "CelestialBodiesShown": true
         }
       }
     },
@@ -221,7 +240,9 @@
       "$className": "Workspace",
       "$properties": {
         "Gravity": 196.2,
-        "StreamingEnabled": false
+        "StreamingEnabled": true,
+        "StreamingTargetRadius": 1024,
+        "StreamingMinRadius": 256
       },
       "Terrain": {
         "$className": "Terrain",

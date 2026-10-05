@@ -106,6 +106,7 @@ local function makePart(props: PartProps, parent: Instance, scale: number?): Bas
 	part.Reflectance = props.Reflectance or 0
 	part.Anchored = true
 	part.CanCollide = if props.CanCollide == nil then true else props.CanCollide
+	part.CanTouch = false -- nothing in a level listens for touches
 	part.CastShadow = if props.CastShadow == nil then true else props.CastShadow
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
@@ -139,7 +140,11 @@ end
 
 -- Scenery part around the object: authored in final studs (not scaled)
 function BuildKit:Decor(props: PartProps): BasePart
-	return makePart(props, self.Environment, 1)
+	local part = makePart(props, self.Environment, 1)
+	if not part.CanCollide then
+		part.CanQuery = false
+	end
+	return part
 end
 
 -- Climbable truss

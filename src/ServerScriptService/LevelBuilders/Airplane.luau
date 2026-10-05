@@ -156,6 +156,8 @@ return function(): Model
 	kit:Decor({ Name = "Antenna", Size = Vector3.new(0.5, 10, 0.5), CFrame = CFrame.new(towerBase + Vector3.new(0, 62, 0)), Color = Color3.fromRGB(220, 60, 60), Material = Enum.Material.Metal })
 	local beacon = kit:Decor({ Name = "Beacon", Size = Vector3.new(1, 1, 1), CFrame = CFrame.new(towerBase + Vector3.new(0, 67.5, 0)), Shape = Enum.PartType.Ball, Color = Color3.fromRGB(255, 70, 70), Material = Enum.Material.Neon, CanCollide = false })
 	local beaconLight = Instance.new("PointLight")
+	beaconLight.Shadows = false
+	beaconLight:SetAttribute("Night", true)
 	beaconLight.Range = 16
 	beaconLight.Color = Color3.fromRGB(255, 80, 80)
 	beaconLight.Parent = beacon

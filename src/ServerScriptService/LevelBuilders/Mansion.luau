@@ -198,6 +198,8 @@ return function(): Model
 		kit:Decor({ Name = "PillarCap", Size = Vector3.new(7, 1, 7), CFrame = CFrame.new(x, 14.5, gateZ), Color = Color3.fromRGB(200, 192, 180), Material = Enum.Material.Limestone })
 		local lantern = kit:Decor({ Name = "Lantern", Size = Vector3.new(2, 2.6, 2), CFrame = CFrame.new(x, 16.3, gateZ), Color = Color3.fromRGB(255, 220, 150), Material = Enum.Material.Neon, CanCollide = false })
 		local glow = Instance.new("PointLight")
+		glow.Shadows = false
+		glow:SetAttribute("Night", true)
 		glow.Range = 20
 		glow.Brightness = 1.5
 		glow.Color = Color3.fromRGB(255, 210, 150)

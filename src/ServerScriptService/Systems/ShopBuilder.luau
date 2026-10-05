@@ -36,6 +36,7 @@ local function part(parent: Instance, props): BasePart
 	p.Transparency = props.Transparency or 0
 	p.Anchored = true
 	p.CanCollide = if props.CanCollide == nil then true else props.CanCollide
+	p.CanTouch = false
 	p.CastShadow = if props.CastShadow == nil then true else props.CastShadow
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
@@ -162,7 +163,7 @@ function ShopBuilder.Build(parent: Instance, cframe: CFrame): Model
 	part(model, { Name = "Ceiling", Size = Vector3.new(WIDTH, 0.6, DEPTH), CFrame = at(0, HEIGHT, 0), Color = Color3.fromRGB(246, 232, 200) })
 	part(model, { Name = "Trim", Size = Vector3.new(WIDTH - 1, 0.3, 0.2), CFrame = at(0, HEIGHT - 0.5, DEPTH / 2 - 0.6), Color = TRIM, CastShadow = false })
 	part(model, { Name = "Header", Size = Vector3.new(WIDTH + 1.6, 2.2, 1.4), CFrame = at(0, HEIGHT - 1.1, -DEPTH / 2), Color = Color3.fromRGB(250, 250, 248) })
-	part(model, { Name = "Roof", Size = Vector3.new(WIDTH + 3, 1, DEPTH + 3), CFrame = at(0, HEIGHT + 0.8, 0), Color = Color3.fromRGB(46, 50, 62), Material = Enum.Material.Slate })
+	part(model, { Name = "Roof", Size = Vector3.new(WIDTH + 3, 1, DEPTH + 3), CFrame = at(0, HEIGHT + 0.8, 0), Color = Color3.fromRGB(46, 50, 62), Material = Enum.Material.RoofShingles })
 	part(model, { Name = "RoofEdge", Size = Vector3.new(WIDTH + 3.4, 0.5, 0.5), CFrame = at(0, HEIGHT + 0.3, -DEPTH / 2 - 1.5), Color = Color3.fromRGB(250, 250, 248) })
 
 	-- Striped awning and sign over the entrance

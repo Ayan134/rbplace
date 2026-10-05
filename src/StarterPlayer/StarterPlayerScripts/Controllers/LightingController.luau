@@ -16,6 +16,8 @@ local LightingController = {}
 
 local Controllers
 local blur: BlurEffect
+local night = false
+local nightLights: { [Light]: boolean } = {}
 local current: string? = nil
 local activeTweens: { Tween } = {}
 
@@ -61,6 +63,25 @@ local function merged(placeId: string?)
 	return result
 end
 
+-- Lamps, string lights and neon signs carry a Night attribute: they only shine (and
+-- only cost rendering time) when the current place is at dusk or night.
+local function refreshLights()
+	for light in pairs(nightLights) do
+		if light.Parent then
+			light.Enabled = night
+		else
+			nightLights[light] = nil
+		end
+	end
+end
+
+local function trackLight(instance: Instance)
+	if instance:IsA("Light") and instance:GetAttribute("Night") == true then
+		nightLights[instance] = true
+		instance.Enabled = night
+	end
+end
+
 -- Tweens the whole scene to a place's mood ("Lobby" or a LevelId)
 function LightingController.Apply(placeId: string?, duration: number?)
 	if current == placeId then
@@ -83,8 +104,14 @@ function LightingController.Apply(placeId: string?, duration: number?)
 		OutdoorAmbient = preset.OutdoorAmbient,
 		ClockTime = preset.ClockTime,
 		GeographicLatitude = preset.GeographicLatitude,
+		ShadowSoftness = preset.ShadowSoftness,
+		EnvironmentDiffuseScale = preset.EnvironmentDiffuseScale,
+		EnvironmentSpecularScale = preset.EnvironmentSpecularScale,
 	}
 	tween(Lighting, lighting, info)
+	tween(findEffect("DepthOfFieldEffect"), preset.Depth, info)
+	night = LightingConfig.IsNight(preset.ClockTime)
+	refreshLights()
 	tween(findEffect("Atmosphere"), preset.Atmosphere, info)
 	tween(findEffect("BloomEffect"), preset.Bloom, info)
 	tween(findEffect("ColorCorrectionEffect"), preset.Color, info)
@@ -104,6 +131,11 @@ function LightingController.Init(controllers)
 end
 
 function LightingController.Start()
+	for _, descendant in ipairs(Workspace:GetDescendants()) do
+		trackLight(descendant)
+	end
+	Workspace.DescendantAdded:Connect(trackLight)
+
 	blur = Instance.new("BlurEffect")
 	blur.Name = "WindowBlur"
 	blur.Size = 0

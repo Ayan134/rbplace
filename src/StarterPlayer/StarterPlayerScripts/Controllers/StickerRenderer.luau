@@ -20,6 +20,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -59,6 +60,7 @@ local pool: { BasePart } = {}
 local lowVFX = false
 
 -- Sticker artwork (emoji / image) is only drawn on the nearest stickers (LOD)
+-- Scaled to the player's graphics quality (see refreshQuality)
 local ART_RADIUS = 70
 local ART_MAX = 650
 local ART_INTERVAL = 0.25
@@ -106,7 +108,7 @@ local function acquireArt(): SurfaceGui
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = 48
 	gui.LightInfluence = 1 -- lit like the paper under it (no glowing white stickers in the sun)
-	gui.MaxDistance = ART_RADIUS + 15
+	gui.MaxDistance = 85
 	gui.ResetOnSpawn = false
 	local emoji = Instance.new("TextLabel")
 	emoji.Name = "Emoji"
@@ -214,6 +216,32 @@ local function attachArt(record)
 	gui.Parent = artFolder
 	record.Art = gui
 	artRecords[record] = true
+end
+
+-- Artwork is the most expensive part of a sticker (a SurfaceGui each), so how many get
+-- it follows the Roblox graphics quality slider; phones get fewer by default.
+local lastQualityCheck = -10
+local function refreshQuality()
+	local now = os.clock()
+	if now - lastQualityCheck < 3 then
+		return
+	end
+	lastQualityCheck = now
+	local level = 0
+	pcall(function()
+		local setting = UserSettings():GetService("UserGameSettings").SavedQualityLevel
+		level = setting.Value -- 0 = Automatic, 1..10
+	end)
+	local phone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	if level == 0 then
+		ART_MAX, ART_RADIUS = if phone then 300 else 650, if phone then 50 else 70
+	elseif level <= 3 then
+		ART_MAX, ART_RADIUS = 180, 40
+	elseif level <= 6 then
+		ART_MAX, ART_RADIUS = 400, 55
+	else
+		ART_MAX, ART_RADIUS = 650, 70
+	end
 end
 
 local function updateArt(focus: Vector3?)
@@ -844,6 +872,7 @@ local function update()
 	-- Artwork LOD around the player
 	if now - lastArtUpdate > ART_INTERVAL then
 		lastArtUpdate = now
+		refreshQuality()
 		local character = LOCAL_PLAYER.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		local camera = Workspace.CurrentCamera

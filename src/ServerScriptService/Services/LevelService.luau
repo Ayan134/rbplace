@@ -134,6 +134,10 @@ end
 local function teleport(player: Player, cframe: CFrame)
 	local character = player.Character
 	if character and character.PrimaryPart then
+		-- With streaming on, load the destination for this player first so they don't fall
+		pcall(function()
+			player:RequestStreamAroundAsync(cframe.Position, 5)
+		end)
 		character:PivotTo(cframe + Vector3.new(0, 3, 0))
 	end
 end

@@ -39,6 +39,7 @@ local function part(parent: Instance, props): BasePart
 	p.Transparency = props.Transparency or 0
 	p.Anchored = true
 	p.CanCollide = if props.CanCollide == nil then true else props.CanCollide
+	p.CanTouch = false
 	p.CastShadow = if props.CastShadow == nil then true else props.CastShadow
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth

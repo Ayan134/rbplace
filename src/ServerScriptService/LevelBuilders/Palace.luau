@@ -182,6 +182,8 @@ return function(): Model
 		for _, z in ipairs({ -66, -48 }) do
 			local post = kit:Decor({ Name = "BridgeLantern", Size = Vector3.new(1.4, 1.8, 1.4), CFrame = CFrame.new(x, 4.3, z), Color = Color3.fromRGB(255, 214, 140), Material = Enum.Material.Neon, CanCollide = false })
 			local glow = Instance.new("PointLight")
+			glow.Shadows = false
+			glow:SetAttribute("Night", true)
 			glow.Range = 16
 			glow.Brightness = 1.2
 			glow.Color = Color3.fromRGB(255, 200, 140)

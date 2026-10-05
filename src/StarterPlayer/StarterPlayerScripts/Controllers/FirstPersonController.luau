@@ -33,6 +33,9 @@ local cursorButton: TextButton
 local altHeld = false
 local posing = false
 local currentRig: Rig? = nil
+local cachedRig: Rig? = nil
+local cachedFor: Model? = nil
+local rigConnection: RBXScriptConnection? = nil
 local pose = { Raise = 0, Inward = 0, Chop = 0 }
 
 export type Rig = {
@@ -144,7 +147,22 @@ local function poseArm(dt: number)
 		lastRotation = nil
 		return
 	end
-	local rig = getRig(character :: Model)
+	-- The rig (arm joints and visible parts) is cached until the character's children change
+	local model = character :: Model
+	if not cachedRig or cachedFor ~= model then
+		cachedRig = getRig(model)
+		cachedFor = model
+		if rigConnection then
+			rigConnection:Disconnect()
+		end
+		rigConnection = model.ChildAdded:Connect(function()
+			cachedRig = nil
+		end)
+		model.ChildRemoved:Once(function()
+			cachedRig = nil
+		end)
+	end
+	local rig = cachedRig
 	if not rig then
 		return
 	end
