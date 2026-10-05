@@ -48,6 +48,9 @@ local function idsOf(info): { string }
 	if info.SoundIds then
 		return info.SoundIds
 	end
+	if info.Playlist then
+		return { info.Playlist[1] }
+	end
 	return if info.SoundId and info.SoundId ~= "" then { info.SoundId } else {}
 end
 
@@ -235,11 +238,43 @@ local function playChannel(channelName: string, name: string?)
 	local sound = template:Clone()
 	channel.Target = sound.Volume
 	sound.Volume = 0
-	sound.Looped = true
 	sound.Parent = SoundService
-	sound:Play()
+	local info = SoundConfig.Get(name)
+	if info.Playlist then
+		-- Play the tracks one after another, starting at a random one
+		local playlist = info.Playlist
+		local index = rng:NextInteger(1, #playlist)
+		local failures = 0
+		local function playTrack()
+			if channel.Sound ~= sound then
+				return
+			end
+			sound.SoundId = playlist[index]
+			sound.TimePosition = 0
+			sound:Play()
+			-- Skip tracks that never load (deleted or private)
+			task.delay(12, function()
+				if channel.Sound == sound and not sound.IsLoaded and failures < #playlist then
+					failures += 1
+					index = (index % #playlist) + 1
+					playTrack()
+				end
+			end)
+		end
+		sound.Looped = false
+		sound.Ended:Connect(function()
+			failures = 0
+			index = (index % #playlist) + 1
+			playTrack()
+		end)
+		channel.Sound = sound
+		playTrack()
+	else
+		sound.Looped = true
+		sound:Play()
+		channel.Sound = sound
+	end
 	TweenService:Create(sound, TweenInfo.new(CROSSFADE + 0.6), { Volume = channel.Target }):Play()
-	channel.Sound = sound
 end
 
 function SoundManager.PlayMusic(name: string?)

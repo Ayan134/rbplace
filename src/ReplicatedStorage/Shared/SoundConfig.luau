@@ -9,8 +9,8 @@
 	so nothing ever goes silent. Replace or reorder ids freely ("rbxassetid://1234567890").
 
 	Sources: Roblox Creator Store / Roblox audio library (the 91xxxxxxxx ids are the
-	Roblox-licensed Pro Sound Effects library, the 18xxxxxxxx music is Roblox-licensed APM music)
-	and popular public effects listed on robloxsong.com.
+	Roblox-licensed Pro Sound Effects library; the lo-fi music is Roblox-licensed APM Music
+	by @APMOfficial) and popular public effects listed on robloxsong.com.
 
 	  Group          "SFX" | "Music" | "Ambience" (Ambience follows the SFX volume slider)
 	  Volume
@@ -50,17 +50,48 @@ SoundConfig.Sounds = {
 	LevelComplete = { SoundIds = { "rbxassetid://1507116849", VICTORY }, Group = "SFX", Volume = 0.55, PlaybackSpeed = 1.0 },
 	Fireworks = { SoundIds = { "rbxassetid://9114363548", "rbxasset://sounds/collide.wav" }, Group = "SFX", Volume = 0.22, PlaybackSpeed = 1.0, PitchVariance = 0.15 },
 	Upgrade = { SoundIds = { "rbxassetid://9119219346", "rbxassetid://9126073011", "rbxassetid://4110925712" }, Group = "SFX", Volume = 0.4, PlaybackSpeed = 1.0 },
-	Sell = { SoundIds = { "rbxassetid://5437842453", "rbxassetid://1169755927", PING }, Group = "SFX", Volume = 0.55, PlaybackSpeed = 1.0 },
-	BagFull = { SoundIds = { "rbxassetid://9117981543", "rbxasset://sounds/button.wav" }, Group = "SFX", Volume = 0.35, PlaybackSpeed = 0.7 },
+	-- Classic cash register "ka-ching" when the bag is emptied into a trash can
+	Sell = { SoundIds = { "rbxassetid://6658761720", "rbxassetid://7112275565", "rbxassetid://1882275320", "rbxassetid://9126073011", PING }, Group = "SFX", Volume = 0.45, PlaybackSpeed = 1.0 },
+	BagFull = { SoundIds = { "rbxassetid://9125397532", "rbxasset://sounds/button.wav" }, Group = "SFX", Volume = 0.25, PlaybackSpeed = 0.8 },
 	Purchase = { SoundIds = { "rbxassetid://5437842453", "rbxassetid://1169755927", "rbxassetid://4110925712" }, Group = "SFX", Volume = 0.45, PlaybackSpeed = 1.0 },
 	Equip = { SoundIds = { "rbxassetid://9113824106", CLICK }, Group = "SFX", Volume = 0.35, PlaybackSpeed = 1.4 },
 	Countdown = { SoundIds = { "rbxassetid://9113081793", SWOOSH }, Group = "SFX", Volume = 0.3, PlaybackSpeed = 1.0 },
 
-	-- Music (Roblox-licensed APM tracks from the official Creator documentation)
-	LobbyMusic = { SoundIds = { "rbxassetid://1841461968", "rbxassetid://1837849285" }, Group = "Music", Volume = 0.2, Looped = true },
-	LevelMusic = { SoundIds = { "rbxassetid://1837849285", "rbxassetid://1841461968" }, Group = "Music", Volume = 0.16, Looped = true },
-	RoyalMusic = { SoundIds = { "rbxassetid://1848183670", "rbxassetid://1837849285" }, Group = "Music", Volume = 0.18, Looped = true },
-	ResultsMusic = { SoundIds = { "rbxassetid://1846248593", "rbxassetid://1841461968" }, Group = "Music", Volume = 0.28, Looped = true },
+	-- Music: chill lo-fi from the Roblox-licensed APM library (usable in any experience).
+	-- `Playlist` entries play one after another (unloadable tracks are skipped).
+	LobbyMusic = {
+		Playlist = {
+			"rbxassetid://9043887091", -- Lo-fi Chill A
+			"rbxassetid://9046863253", -- Poolside
+			"rbxassetid://9046863579", -- City Lights
+			"rbxassetid://9042666762", -- Chillin at Home
+		},
+		Group = "Music",
+		Volume = 0.3,
+	},
+	LevelMusic = {
+		Playlist = {
+			"rbxassetid://9046863253", -- Poolside
+			"rbxassetid://9048511491", -- Wavy Shores
+			"rbxassetid://9043887120", -- Lo-fi Chill B
+			"rbxassetid://9042666762", -- Chillin at Home
+			"rbxassetid://9047050075", -- Lo Fi Dreams Hip Hop
+			"rbxassetid://9043887091", -- Lo-fi Chill A
+		},
+		Group = "Music",
+		Volume = 0.24,
+	},
+	RoyalMusic = {
+		Playlist = {
+			"rbxassetid://9048511491", -- Wavy Shores
+			"rbxassetid://9043887320", -- Lo-fi Chill C
+			"rbxassetid://1845341094", -- Chill Jazz
+			"rbxassetid://9046863579", -- City Lights
+		},
+		Group = "Music",
+		Volume = 0.24,
+	},
+	ResultsMusic = { SoundIds = { "rbxassetid://9046863579", "rbxassetid://9043887120" }, Group = "Music", Volume = 0.32, Looped = true },
 
 	-- Environment ambience loops (Pro Sound Effects library)
 	AmbienceCity = { SoundIds = { "rbxassetid://9112758786" }, Group = "Ambience", Volume = 0.12, Looped = true },
