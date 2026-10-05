@@ -12,7 +12,7 @@ local BuildKit = require(script.Parent.BuildKit)
 local Decor = require(script.Parent.Parent.Systems.Decor)
 local ShopBuilder = require(script.Parent.Parent.Systems.ShopBuilder)
 
-local PILE_COLOR = Color3.fromRGB(196, 186, 176)
+local PILE_COLOR = Color3.fromRGB(86, 74, 110) -- dark under the stickers so gaps read as depth
 
 return function(): Model
 	local kit = BuildKit.new("Pile")

@@ -153,18 +153,18 @@ StickerConfig.Types = {
 
 -- Palette for regular stickers (index is replicated, so only append to this list)
 StickerConfig.Palette = {
-	Color3.fromRGB(255, 255, 255),
-	Color3.fromRGB(255, 214, 224),
-	Color3.fromRGB(255, 232, 196),
-	Color3.fromRGB(255, 246, 190),
-	Color3.fromRGB(208, 244, 204),
-	Color3.fromRGB(196, 238, 236),
-	Color3.fromRGB(204, 224, 255),
-	Color3.fromRGB(226, 212, 255),
-	Color3.fromRGB(255, 208, 240),
-	Color3.fromRGB(70, 74, 92),
-	Color3.fromRGB(255, 160, 150),
-	Color3.fromRGB(150, 210, 255),
+	Color3.fromRGB(255, 92, 140), -- pink
+	Color3.fromRGB(255, 150, 50), -- orange
+	Color3.fromRGB(255, 214, 46), -- yellow
+	Color3.fromRGB(110, 214, 80), -- green
+	Color3.fromRGB(40, 196, 220), -- cyan
+	Color3.fromRGB(70, 130, 255), -- blue
+	Color3.fromRGB(160, 100, 255), -- purple
+	Color3.fromRGB(255, 110, 200), -- magenta
+	Color3.fromRGB(240, 70, 70), -- red
+	Color3.fromRGB(60, 64, 90), -- night
+	Color3.fromRGB(255, 255, 255), -- white
+	Color3.fromRGB(30, 200, 150), -- teal
 }
 
 --[[

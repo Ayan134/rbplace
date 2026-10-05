@@ -59,8 +59,8 @@ local pool: { BasePart } = {}
 local lowVFX = false
 
 -- Sticker artwork (emoji / image) is only drawn on the nearest stickers (LOD)
-local ART_RADIUS = 60
-local ART_MAX = 450
+local ART_RADIUS = 70
+local ART_MAX = 650
 local ART_INTERVAL = 0.25
 local artPool: { SurfaceGui } = {}
 local artRecords: { [any]: boolean } = {}
@@ -105,13 +105,13 @@ local function acquireArt(): SurfaceGui
 	gui.Name = "StickerArt"
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = 48
-	gui.LightInfluence = 0.5
+	gui.LightInfluence = 1 -- lit like the paper under it (no glowing white stickers in the sun)
 	gui.MaxDistance = ART_RADIUS + 15
 	gui.ResetOnSpawn = false
 	local emoji = Instance.new("TextLabel")
 	emoji.Name = "Emoji"
 	emoji.BackgroundTransparency = 1
-	emoji.Size = UDim2.fromScale(0.8, 0.8)
+	emoji.Size = UDim2.fromScale(0.9, 0.9)
 	emoji.Position = UDim2.fromScale(0.5, 0.5)
 	emoji.AnchorPoint = Vector2.new(0.5, 0.5)
 	emoji.TextScaled = true
@@ -156,12 +156,9 @@ local function acquireArt(): SurfaceGui
 	local gradient = Instance.new("UIGradient")
 	gradient.Rotation = 55
 	gradient.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(0.3, 0.78),
-		NumberSequenceKeypoint.new(0.36, 1),
-		NumberSequenceKeypoint.new(0.62, 1),
-		NumberSequenceKeypoint.new(0.68, 0.88),
-		NumberSequenceKeypoint.new(0.74, 1),
+		NumberSequenceKeypoint.new(0, 0.7),
+		NumberSequenceKeypoint.new(0.25, 0.9),
+		NumberSequenceKeypoint.new(0.3, 1),
 		NumberSequenceKeypoint.new(1, 1),
 	})
 	gradient.Parent = gloss
@@ -209,7 +206,7 @@ local function attachArt(record)
 	local shortSide = math.min(record.SizeX or 1, record.SizeZ or 1)
 	borderCorner.CornerRadius = radius
 	glossCorner.CornerRadius = radius
-	stroke.Thickness = math.clamp(shortSide * gui.PixelsPerStud * 0.06, 1.5, 9)
+	stroke.Thickness = math.clamp(shortSide * gui.PixelsPerStud * 0.08, 2, 12)
 	-- Circle stickers are cylinders whose +X axis is the surface normal
 	gui.Face = if record.Circle then Enum.NormalId.Right else Enum.NormalId.Top
 	gui.Adornee = record.Part

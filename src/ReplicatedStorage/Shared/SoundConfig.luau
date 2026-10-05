@@ -51,7 +51,6 @@ SoundConfig.Sounds = {
 	Fireworks = { SoundIds = { "rbxassetid://9114363548", "rbxasset://sounds/collide.wav" }, Group = "SFX", Volume = 0.22, PlaybackSpeed = 1.0, PitchVariance = 0.15 },
 	Upgrade = { SoundIds = { "rbxassetid://9119219346", "rbxassetid://9126073011", "rbxassetid://4110925712" }, Group = "SFX", Volume = 0.4, PlaybackSpeed = 1.0 },
 	Sell = { SoundIds = { "rbxassetid://5437842453", "rbxassetid://1169755927", PING }, Group = "SFX", Volume = 0.55, PlaybackSpeed = 1.0 },
-	TrashLid = { SoundIds = { "rbxasset://sounds/collide.wav" }, Group = "SFX", Volume = 0.3, PlaybackSpeed = 1.4 },
 	BagFull = { SoundIds = { "rbxassetid://9117981543", "rbxasset://sounds/button.wav" }, Group = "SFX", Volume = 0.35, PlaybackSpeed = 0.7 },
 	Purchase = { SoundIds = { "rbxassetid://5437842453", "rbxassetid://1169755927", "rbxassetid://4110925712" }, Group = "SFX", Volume = 0.45, PlaybackSpeed = 1.0 },
 	Equip = { SoundIds = { "rbxassetid://9113824106", CLICK }, Group = "SFX", Volume = 0.35, PlaybackSpeed = 1.4 },

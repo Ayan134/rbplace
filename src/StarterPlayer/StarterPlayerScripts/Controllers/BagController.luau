@@ -95,9 +95,7 @@ end
 
 local function onSold(payload)
 	clearGuide()
-	local SoundManager = Controllers.SoundManager
-	SoundManager.Play("TrashLid")
-	SoundManager.Play("Sell")
+	Controllers.SoundManager.Play("Sell")
 	local position = payload.Position
 	if typeof(position) == "Vector3" then
 		Controllers.EffectsController.SellBurst(position + Vector3.new(0, 5.5, 0), payload.Count)

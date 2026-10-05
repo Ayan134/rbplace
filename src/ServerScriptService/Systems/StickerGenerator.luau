@@ -48,6 +48,7 @@ type Face = {
 	MinDot: number, -- cos(MaxAngle)
 	MaxDot: number, -- cos(MinAngle)
 	BaseSize: number,
+	ZMin: number?, -- Sphere: lowest sampled height (-1..1, local Y) so buried parts are skipped
 }
 
 local function parseFaces(part: BasePart, defaults: { string }): { [string]: boolean }
@@ -227,8 +228,15 @@ function StickerGenerator.DetectSurfaces(model: Model, groundY: number, difficul
 			end
 		elseif shape == "Ball" then
 			local radius = math.min(size.X, size.Y, size.Z) / 2
-			local face = base("Sphere", cf, 4 * math.pi * radius * radius)
+			-- Only the part above the ground gets stickers (mounds are spheres sunk into the
+			-- ground); sizing and sampling use that cap so coverage stays even.
+			local zMin = -1
+			if cf.UpVector.Y > 0.99 then
+				zMin = math.clamp((groundY - cf.Position.Y) / radius, -1, 0.95)
+			end
+			local face = base("Sphere", cf, 2 * math.pi * radius * radius * (1 - zMin))
 			face.Radius = radius
+			face.ZMin = zMin
 			addFace(face)
 		end
 	end
@@ -279,8 +287,9 @@ local function samplePoint(face: Face, u: number, v: number): (Vector3?, Vector3
 		local position = face.CFrame:PointToWorldSpace(Vector3.new(x, 0, 0) + localNormal * face.Radius)
 		return position, face.CFrame:VectorToWorldSpace(localNormal)
 	elseif face.Kind == "Sphere" then
-		-- u -> z in [-1,1], v -> angle
-		local z = u
+		-- u -> height on the sphere (uniform area between ZMin and the top), v -> angle
+		local zMin = face.ZMin or -1
+		local z = zMin + (u + 1) / 2 * (1 - zMin)
 		local angle = (v + 1) * math.pi
 		local r = math.sqrt(math.max(0, 1 - z * z))
 		local localNormal = Vector3.new(r * math.cos(angle), z, r * math.sin(angle))

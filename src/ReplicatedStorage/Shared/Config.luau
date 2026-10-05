@@ -101,8 +101,8 @@ local Config = {
 
 	Sticker = {
 		Thickness = 0.06,
-		SurfaceOffset = 0.035,
-		LayerStep = 0.0045,
+		SurfaceOffset = 0.04,
+		LayerStep = 0.012, -- big enough that overlapping stickers never z-fight at a distance
 		CoverageFactor = 1.22, -- >1 means stickers overlap so the object looks fully covered
 		MinSize = 0.45,
 		MaxSize = 9,
